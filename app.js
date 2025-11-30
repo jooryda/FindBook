@@ -481,15 +481,47 @@ async function generateSummary(book) {
   const el = document.getElementById("summary");
   if (!el) return;
 
-  if (!OPENAI_API_KEY || OPENAI_API_KEY === "YOUR_OPENAI_API_KEY_HERE") {
-    el.textContent = "OpenAI API 키가 설정되어 있지 않아 요약을 생성할 수 없습니다.";
-    return;
-  }
-
   if (!book.description) {
     el.textContent = "이 책에 대한 소개 텍스트가 없어 요약을 생성할 수 없습니다.";
     return;
   }
+
+  try {
+    const userContent =
+      `제목: ${book.title}
+` +
+      `저자: ${book.authors}
+` +
+      `장르/카테고리: ${book.categories}
+
+` +
+      `아래는 이 책의 소개/줄거리 텍스트입니다. 이 내용을 기반으로 요구사항에 맞게 요약해줘.
+
+` +
+      book.description;
+
+    const res = await fetch("/api/summary", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text: userContent })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      el.textContent = "요약 생성 중 오류: " + data.error;
+      return;
+    }
+
+    el.innerHTML = data.summary.replace(/
+/g, "<br>");
+  } catch (err) {
+    console.error(err);
+    el.textContent = "요약 생성 중 오류가 발생했습니다.";
+  }
+}
 
   try {
     const userContent =
@@ -503,8 +535,7 @@ async function generateSummary(book) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
+              },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
