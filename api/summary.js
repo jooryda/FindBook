@@ -1,3 +1,7 @@
+export const config = {
+  runtime: "nodejs"
+};
+
 // api/summary.js
 import OpenAI from "openai";
 
