@@ -481,11 +481,6 @@ async function generateSummary(book) {
   const el = document.getElementById("summary");
   if (!el) return;
 
-  if (!OPENAI_API_KEY || OPENAI_API_KEY === "YOUR_OPENAI_API_KEY_HERE") {
-    el.textContent = "OpenAI API 키가 설정되어 있지 않아 요약을 생성할 수 없습니다.";
-    return;
-  }
-
   if (!book.description) {
     el.textContent = "이 책에 대한 소개 텍스트가 없어 요약을 생성할 수 없습니다.";
     return;
@@ -502,51 +497,29 @@ async function generateSummary(book) {
     const res = await fetch("/api/summary", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "너는 책 소개 전문 요약가야. 사용자가 제공한 책 소개 텍스트를 기반으로 다음을 모두 포함한 한국어 응답을 만들어줘.\n\n" +
-              "1) [📘 상세 요약] 섹션: 15~25문장 정도의 충분히 긴 요약. 책의 분위기, 세계관/배경, 주요 인물과 관계, 갈등 구조, 핵심 테마를 설명하되 결말/반전/범인의 정체/죽음 등 스포일러는 절대 포함하지 마.\n" +
-              "2) [🏷️ 장르] 섹션: 이 책의 주요 장르(예: 심리 스릴러, 성장소설, 로맨스, 판타지, SF 등)를 한두 줄로 정리.\n" +
-              "3) [👥 추천 독자층] 섹션: 이 책을 특히 좋아할 가능성이 높은 독자 유형을 2~4문장으로 설명 (연령대, 취향, 상황 등).\n" +
-              "4) [📚 유사 추천 도서] 섹션: 비슷한 분위기/주제/구성을 가진 책 2권을, '1) 책 제목 — 간단한 이유' 형식으로 제시. 너무 마이너한 책보다는 비교적 알려진 작품 위주로.\n\n" +
-              "반드시 아래 형식으로만 출력해. 다른 말은 덧붙이지 마.\n\n" +
-              "[📘 상세 요약]\n(내용)\n\n" +
-              "[🏷️ 장르]\n(내용)\n\n" +
-              "[👥 추천 독자층]\n(내용)\n\n" +
-              "[📚 유사 추천 도서]\n1) ...\n2) ..."
-          },
-          {
-            role: "user",
-            content: userContent,
-          },
-        ],
-        max_tokens: 900,
-        temperature: 0.7,
-      }),
+      body: JSON.stringify({ text: userContent })
     });
 
     const data = await res.json();
-    const answer = data.choices?.[0]?.message?.content;
 
-    if (!answer) {
-      console.error("OpenAI 응답 형식이 예상과 다릅니다:", data);
-      el.textContent =
-        "요약을 생성하는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    if (data.error) {
+      el.textContent = "요약 생성 중 오류가 발생했습니다: " + data.error;
       return;
     }
 
-    el.innerHTML = answer.replace(/\n/g, "<br>");
+    if (!data.summary) {
+      console.error("요약 데이터가 비어 있습니다:", data);
+      el.textContent = "요약을 생성하는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
+      return;
+    }
+
+    el.innerHTML = data.summary.replace(/\n/g, "<br>");
   } catch (err) {
     console.error(err);
     el.textContent =
-      "요약 생성 중 오류가 발생했습니다. (네트워크 상태 또는 API 키 설정을 확인해 주세요.)";
+      "요약 생성 중 오류가 발생했습니다. (네트워크 상태 또는 API 서버 상태를 확인해 주세요.)";
   }
 }
 
