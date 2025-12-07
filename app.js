@@ -1,3 +1,16 @@
+
+// 가격 표시 함수 추가 (옵션 D)
+function extractPrice(naverItem, googleItem) {
+  if (naverItem && naverItem.price) return naverItem.price + "원";
+  const g = googleItem || {};
+  const sale = g?.saleInfo?.listPrice?.amount;
+  const retail = g?.saleInfo?.retailPrice?.amount;
+  if (sale) return sale + "원";
+  if (retail) return retail + "원";
+  return "가격 정보 없음";
+}
+
+
 // Book Summary Finder Pro - full front-end logic
 // Features:
 // - 고급 UI + 반응형 레이아웃
