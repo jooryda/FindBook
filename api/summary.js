@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   try {
     const completion = await client.chat.completions.create({
-      model: "gpt-5-large",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
