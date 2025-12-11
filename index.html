@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Book App</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Summary Finder</title>
+  <link rel="stylesheet" href="style.css" />
 <script>
 window.__ENV = {
   NAVER_CLIENT_ID: "{{NAVER_CLIENT_ID}}",
@@ -11,7 +13,41 @@ window.__ENV = {
 </script>
 </head>
 <body>
-<!-- Your existing HTML content goes here -->
-<script src="app.js"></script>
+  <div class="container">
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <header class="header">
+        <h1 class="logo">Book Summary Finder</h1>
+        <p class="subtitle">관심 있는 책을 검색하고, 스포일러 없는 요약을 바로 확인하세요.</p>
+      </header>
+
+      <div class="search-box">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="책 제목 / 저자 / ISBN으로 검색"
+        />
+        <button id="searchButton">검색</button>
+      </div>
+
+      <section class="hint">
+        <p>· 예: &quot;호밀밭의 파수꾼&quot;, &quot;기욤 뮈소&quot;, &quot;9788936433598&quot;</p>
+      </section>
+
+      <iframe id="resultsFrame" class="results-frame" title="검색 결과 목록"></iframe>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div id="bookDetails" class="book-details book-details--empty">
+        <div class="placeholder">
+          <h2>책을 검색한 뒤, 왼쪽에서 하나를 선택해 주세요.</h2>
+          <p>선택한 책의 기본 정보, 스포일러 없는 줄거리 요약, 수상 여부 정보를 보여줄게요.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
 </body>
 </html>
