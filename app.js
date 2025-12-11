@@ -124,10 +124,12 @@ async function searchBooks() {
   // 1) Google Books
   const googleItems = await fetchGoogleBooks(q, 40);
 
-  // 2) Naver Books (선택)
+  // 2) Naver Books (서버 프록시를 통해 항상 시도)
   let naverItems = [];
-  if (NAVER_CLIENT_ID && NAVER_CLIENT_SECRET) {
+  try {
     naverItems = await fetchNaverBooks(q, 20);
+  } catch (e) {
+    console.warn("Naver Books fetch failed:", e);
   }
 
   // Aladin은 CORS/JSONP 문제로 여기서는 생략 (백엔드 프록시 권장)
@@ -174,17 +176,11 @@ async function fetchGoogleBooks(query, maxResults = 40) {
 
 // Naver Books → 통합 아이템 포맷
 async function fetchNaverBooks(query, display = 20) {
-  const url = `https://openapi.naver.com/v1/search/book.json?query=${encodeURIComponent(
-    query
-  )}&display=${display}`;
+  // 서버 API 프록시를 통해 네이버 도서 검색 호출 (API 키는 서버에서만 사용)
+  const url = `/api/naver-search?query=${encodeURIComponent(query)}&display=${display}`;
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        "X-Naver-Client-Id": NAVER_CLIENT_ID,
-        "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
-      },
-    });
+    const res = await fetch(url);
     if (!res.ok) {
       console.warn("Naver Books non-200:", res.status);
       return [];
