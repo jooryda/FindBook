@@ -1,5 +1,7 @@
-// /api/naver-search.js
-// 서버 사이드에서 네이버 도서 검색 API를 호출하는 프록시
+// /api/naver-search.js  -- Server-side proxy to Naver Books API
+
+export const config = { runtime: "nodejs" };
+
 export default async function handler(req, res) {
   const { query, display = 20 } = req.query || {};
 
@@ -11,7 +13,9 @@ export default async function handler(req, res) {
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return res.status(500).json({ error: "Naver API credentials are not configured." });
+    return res
+      .status(500)
+      .json({ error: "Naver API credentials are not configured." });
   }
 
   try {
@@ -29,7 +33,9 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const text = await response.text();
       console.error("Naver API non-200:", response.status, text);
-      return res.status(response.status).json({ error: "Naver API error", status: response.status });
+      return res
+        .status(response.status)
+        .json({ error: "Naver API error", status: response.status });
     }
 
     const data = await response.json();

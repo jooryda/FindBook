@@ -1,5 +1,4 @@
-
-// /api/summary.js  -- Server-side Naver+Google Summary & Recommendations
+// /api/summary.js  -- Server-side summary + recommendations
 export const config = { runtime: "nodejs" };
 import OpenAI from "openai";
 
@@ -35,7 +34,7 @@ STRICT JSON ONLY.
 - JSON 외 텍스트 절대 금지
 - books 배열 길이는 반드시 5
 - 제목, 저자명 등은 실제 존재하는 책 위주로 선정
-- summary는 8~12문장, Apple Books 느낌의 부드러운 톤
+- summary는 8~12문장, 부드럽고 감성적인 톤
 - 추천이 비어있으면 모델이 반드시 유추해서 채울 것
 `
       },
