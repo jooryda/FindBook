@@ -26,8 +26,8 @@ function extractPrice(naverItem, googleItem) {
 const OPENAI_API_KEY = "";
 
 // 선택: 네이버 도서 API (없으면 자동으로 건너뜀)
-const NAVER_CLIENT_ID = "";
-const NAVER_CLIENT_SECRET = "";
+const NAVER_CLIENT_ID = window.__ENV?.NAVER_CLIENT_ID || "";
+const NAVER_CLIENT_SECRET = window.__ENV?.NAVER_CLIENT_SECRET || "";
 
 // Aladin TTB 키는 CORS/JSONP 문제로 여기서는 미구현 상태. (서버 프록시 권장)
 // const ALADIN_TTB_KEY = "";

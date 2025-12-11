@@ -1,64 +1,17 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book Summary Finder Pro</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>Book App</title>
+<script>
+window.__ENV = {
+  NAVER_CLIENT_ID: "{{NAVER_CLIENT_ID}}",
+  NAVER_CLIENT_SECRET: "{{NAVER_CLIENT_SECRET}}"
+}
+</script>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="top-bar">
-      <div class="brand">
-        <span class="brand-mark">📚</span>
-        <div class="brand-text">
-          <div class="brand-title">Book Summary Finder</div>
-          <div class="brand-sub">책 검색 · 스포일러 없는 요약 · 비슷한 책 추천</div>
-        </div>
-      </div>
-    </header>
-
-    <main class="container">
-      <section class="left-panel">
-        <div class="search-area">
-          <label for="searchInput" class="search-label">책 제목 · 저자 · ISBN으로 검색</label>
-          <div class="search-row">
-            <input
-              type="text"
-              id="searchInput"
-              class="search-input"
-              placeholder="예) 아몬드, 손원평, 9788952797917"
-              autocomplete="off"
-            />
-            <button id="searchButton" class="search-btn">검색</button>
-          </div>
-          <ul id="autocompleteList" class="autocomplete-list"></ul>
-          <p class="search-hint">
-            엔터 또는 검색 버튼을 눌러 전체 결과를 확인할 수 있어요.
-          </p>
-        </div>
-
-        <div class="results-wrapper">
-          <h2 class="panel-title">검색 결과</h2>
-          <iframe id="resultsFrame" class="results-frame" title="검색 결과 목록"></iframe>
-        </div>
-      </section>
-
-      <section class="right-panel">
-        <div id="bookDetails" class="book-details empty">
-          <div class="placeholder">
-            <h2>👈 먼저 왼쪽에서 책을 검색해 주세요</h2>
-            <p>
-              제목이나 작가, ISBN으로 검색하면<br />
-              이 영역에 스포일러 없는 긴 줄거리 요약과<br />
-              비슷한 책 2권까지 함께 보여줄게요.
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script src="app.js" defer></script>
+<!-- Your existing HTML content goes here -->
+<script src="app.js"></script>
 </body>
 </html>
