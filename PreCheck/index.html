@@ -7,7 +7,7 @@
   <style>
     :root{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
-      --bg:#f6f7f9; --card:#fff; --ink:#111; --muted:#666; --line:#e9edf2; --primary:#111; --danger:#b00020;
+      --bg:#f6f7f9; --card:#fff; --ink:#111; --muted:#666; --line:#e9edf2; --primary:#111; --danger:#b00020; --warn:#d97706;
       --shadow: 0 2px 14px rgba(0,0,0,.06);
       --radius: 14px;
     }
@@ -23,10 +23,12 @@
     .btn.danger { border-color:#ffd1d1; color:var(--danger); }
     .btn:disabled { opacity:.45; cursor:not-allowed; }
     .pill{ font-size: 12px; padding: 3px 10px; border-radius: 999px; border:1px solid #ddd; background:#fafafa; font-weight: 900; }
+    .pill.warn{ border-color:#fde68a; background:#fffbeb; color:#92400e; }
+    .pill.bad{ border-color:#ffd1d1; background:#fff5f5; color:var(--danger); }
     .kpi{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
     .tableWrap{ overflow:auto; border:1px solid var(--line); border-radius: 14px; margin-top: 10px; background:#fff; }
-    table{ width:100%; border-collapse: collapse; min-width: 1040px; }
+    table{ width:100%; border-collapse: collapse; min-width: 1080px; }
     thead th{
       position: sticky; top: 0; z-index: 1;
       background:#fafafa; border-bottom:1px solid var(--line);
@@ -38,6 +40,8 @@
       padding: 8px 8px; font-size: 13px; vertical-align: top;
     }
     tbody tr:hover{ background:#fcfcfd; }
+    tbody tr.dupe{ background:#fff5f5; }
+    tbody tr.dupe:hover{ background:#ffecec; }
 
     .selCell{ width: 44px; }
     .arrCell{ width: 72px; }
@@ -50,6 +54,7 @@
     .edit{ border:1px dashed transparent; border-radius: 10px; padding: 4px 6px; }
     .edit[contenteditable="true"]:focus{ outline:none; border-color:#7fb0ff; background:#f6fbff; }
     .cell-muted{ color:var(--muted); font-size: 12px; line-height: 1.35; }
+
     select.miniSelect{
       border: 1px solid #ddd; border-radius: 10px; padding: 5px 7px; background:#fff; font-weight: 900; font-size: 12px;
     }
@@ -65,23 +70,32 @@
     }
     .bottomInner{ max-width: 1320px; margin: 0 auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
     .spacer{ flex:1; }
-    .warn{ color: var(--danger); font-weight: 950; font-size: 12px; }
 
     /* Paste modal */
     .modalBackdrop{ position: fixed; inset: 0; background: rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
-    .modal{ width: min(820px, 100%); background:#fff; border-radius: 14px; box-shadow: 0 18px 60px rgba(0,0,0,.25); padding: 14px; }
+    .modal{ width: min(860px, 100%); background:#fff; border-radius: 14px; box-shadow: 0 18px 60px rgba(0,0,0,.25); padding: 14px; }
     .modal h2{ margin:0 0 8px; font-size: 16px; }
     .modal textarea{ width:100%; min-height: 120px; border-radius: 12px; border:1px solid #ddd; padding: 10px; }
     .tiny{ font-size: 11px; color: var(--muted); }
 
+    .drop{
+      border: 2px dashed #cdd6e4; border-radius: 14px; padding: 12px; background:#fbfcff;
+    }
+    .drop strong{ font-size: 13px; }
+    .drop .hint{ font-size: 12px; color: var(--muted); margin-top: 4px; }
+    input[type="file"]{ display:none; }
+    .progress{ font-size: 12px; font-weight: 900; }
+    .progress .mono{ font-weight: 900; }
+    .warn{ color: var(--danger); font-weight: 950; font-size: 12px; }
+
     @media (max-width: 520px){
       .wrap{ padding: 10px; padding-bottom: 112px; }
-      .btn{ width: 100%; }
-      .bottomInner .btn{ width:auto; }
-      table{ min-width: 920px; }
+      table{ min-width: 980px; }
       thead th, tbody td{ padding: 6px 6px; }
       .edit{ padding: 3px 5px; }
       .timeCell{ width: 140px; }
+      .btn{ width: 100%; }
+      .bottomInner .btn{ width:auto; }
     }
   </style>
 </head>
@@ -93,17 +107,35 @@
         목적: 익일 오더(배송) 확인 후 <b>미도착 물품을 팀이 공유</b>해서 중복 오더를 방지하고, 다음 도착(일/월/화/목 등)을 함께 추적합니다.
       </div>
       <div class="muted" style="margin-top:6px;">
-        v13: <b>실시간 동기화(여러 명 동시)</b> 지원 — Firebase Firestore 사용. (아래 설정 1회 필요)
+        입력 방법 2가지: (1) 표에서 직접 입력/추가 (2) 이미지 업로드 → <b>아티클 번호만 OCR 추출</b> → IKEA 자동 조회
       </div>
       <div class="muted" style="margin-top:6px;">
         상태: <span id="conn" class="pill">연결 준비</span>
         <span class="pill" id="userTag">사용자: -</span>
         <span class="pill" id="boardTag">보드: prenote-main</span>
+        <span class="pill" id="dupeTag">중복 0</span>
       </div>
     </div>
 
     <div class="panel">
-      <div class="row" style="justify-content:space-between;">
+      <div class="drop" id="dropZone">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <strong>이미지 업로드 (선택)</strong>
+            <div class="hint">스크린샷 여러 장을 한 번에 넣을 수 있어요. OCR은 “아티클(000.000.00)”만 뽑아서 자동 조회합니다.</div>
+          </div>
+          <div class="row">
+            <label class="btn secondary" for="imgInput">이미지 선택(여러개)</label>
+            <input id="imgInput" type="file" accept="image/*" multiple />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <span class="pill warn">OCR은 100%가 아닙니다. 추출 후 표에서 아티클을 꼭 한번 확인하세요.</span>
+          <span class="progress" id="ocrProg"></span>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:space-between; margin-top:10px;">
         <div class="row">
           <label class="toggle">
             <input type="checkbox" id="onlyOpen" checked />
@@ -119,11 +151,12 @@
           <span class="pill" id="doneCount">도착 0</span>
         </div>
       </div>
+
       <div class="muted" style="margin-top:8px;">
-        입력 최소화: 제품명/아티클/로케이션/수량/메모 중 필요한 것만. 셀 클릭→수정→포커스 이동 시 자동 저장.
+        셀 클릭→수정→포커스 이동 시 자동 저장. 아티클 입력하면 <span class="mono">/ikea_proxy.php</span>로 IKEA 정보 자동 조회(제품명/메모).
       </div>
       <div class="muted" style="margin-top:6px;">
-        <span class="warn">중요</span>: 실시간 공유를 위해서는 아래 Firebase 설정을 완료하고 <span class="mono">firebaseConfig</span>를 채워야 합니다.
+        <span class="warn">중요</span>: <span class="mono">ikea_proxy.php</span>를 jooryda.com에 업로드해야 자동 조회가 동작합니다.
       </div>
     </div>
 
@@ -142,6 +175,7 @@
               <th class="etaCell">예상요일</th>
               <th>메모</th>
               <th class="timeCell">업데이트</th>
+              <th class="arrCell">IKEA</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -167,10 +201,9 @@
         <button class="btn" id="closeModal">닫기</button>
       </div>
       <div class="muted" style="margin-bottom:8px;">
-        줄마다 1개 항목으로 추가됩니다. 예시: <span class="mono">SNTTIG ... 502.981.02 S09G18 56</span><br>
-        최소: 아티클(<span class="mono">000.000.00</span>) 또는 제품명만 있어도 생성됩니다.
+        줄마다 1개 항목으로 추가됩니다. 최소: 아티클(<span class="mono">000.000.00</span>) 또는 제품명만 있어도 생성됩니다.
       </div>
-      <textarea id="pasteText" placeholder="여기에 여러 줄을 붙여넣으세요."></textarea>
+      <textarea id="pasteText" placeholder="여기에 여러 줄을 붙여넣으세요. 예: SNUTTIG ... 502.981.02 S09G18 56"></textarea>
       <div class="row" style="margin-top:10px; justify-content:space-between;">
         <div class="tiny">추가 후에도 팀원에게 실시간 반영됩니다.</div>
         <div class="row">
@@ -180,10 +213,13 @@
     </div>
   </div>
 
-  <!-- Firebase (Compat for simplicity) -->
+  <!-- Firebase (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+
+  <!-- Tesseract.js for OCR -->
+  <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -191,17 +227,17 @@
     // =======================
     // 1) Firebase 설정 (필수)
     // =======================
-    // Firebase 콘솔 → 프로젝트 생성 → "웹 앱 추가" → 아래 객체를 붙여넣기
     const firebaseConfig = {
-   	  apiKey: "AIzaSyDx3RfGZa0HI37C4fKGQOqJ_n6EIyFyURM",
-  	  authDomain: "prenote-check.firebaseapp.com",
-   	  projectId: "prenote-check",
-  	  storageBucket: "prenote-check.firebasestorage.app",
-  	  messagingSenderId: "211538605470",
-	  appId: "1:211538605470:web:d3d23ce177a5978699528f"
+      // TODO: 여기에 본인 프로젝트 설정값을 붙여넣으세요.
+      // apiKey: "....",
+      // authDomain: "....firebaseapp.com",
+      // projectId: "....",
+      // storageBucket: "....",
+      // messagingSenderId: "....",
+      // appId: "...."
     };
 
-    // 공유 보드 ID (팀 단위로 고정). 필요 시 변경 가능.
+    // 공유 보드 ID (팀 단위로 고정)
     const BOARD_ID = "prenote-main";
 
     // =======================
@@ -213,18 +249,11 @@
       items: [],
       userId: null,
       ready: false,
+      ocrBusy: false,
+      dupes: new Set(),
     };
 
     const ETA_OPTIONS = ["-", "일", "월", "화", "목"];
-    function nowISO() {
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mi = String(d.getMinutes()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
-    }
 
     // =======================
     // Firebase init + realtime
@@ -233,8 +262,9 @@
     let auth = null;
     let col = null;
 
-    function setConn(text) {
+    function setConn(text, kind="") {
       $("conn").textContent = text;
+      $("conn").className = "pill" + (kind ? (" " + kind) : "");
     }
 
     function hasConfig(cfg) {
@@ -243,9 +273,7 @@
 
     async function initFirebase() {
       if (!hasConfig(firebaseConfig)) {
-        setConn("설정 필요");
-        $("conn").style.borderColor = "#ffd1d1";
-        $("conn").style.background = "#fff5f5";
+        setConn("설정 필요", "warn");
         return;
       }
 
@@ -253,17 +281,15 @@
       auth = firebase.auth();
       db = firebase.firestore();
 
-      setConn("연결 중…");
+      setConn("연결 중…", "warn");
 
-      // Anonymous auth (간단)
+      // Anonymous auth
       const res = await auth.signInAnonymously();
       state.userId = res.user && res.user.uid ? res.user.uid : "anon";
       $("userTag").textContent = `사용자: ${state.userId.slice(0,8)}`;
 
-      // Collection: boards/{BOARD_ID}/items
       col = db.collection("boards").doc(BOARD_ID).collection("items");
 
-      // Realtime listener
       col.orderBy("updatedAt", "desc").onSnapshot((snap) => {
         const items = [];
         snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
@@ -273,7 +299,7 @@
         render();
       }, (err) => {
         console.error(err);
-        setConn("연결 오류");
+        setConn("연결 오류", "bad");
       });
     }
 
@@ -281,6 +307,7 @@
     // Helpers / parsing
     // =======================
     const ARTICLE_RE = /\b\d{3}\.\d{3}\.\d{2}\b/;
+
     function norm(s) {
       return (s || "").replace(/\r/g, "\n").replace(/\u00A0/g, " ").trim();
     }
@@ -303,6 +330,23 @@
       }
       return "";
     }
+
+    function extractAllArticles(text) {
+      const fixed = toDigitLike(norm(text));
+      const found = new Set();
+
+      // 000.000.00 형태
+      (fixed.match(/\b\d{3}\.\d{3}\.\d{2}\b/g) || []).forEach(a => found.add(a));
+
+      // 8자리 숫자 (00000000) 형태
+      const digits = fixed.replace(/[^0-9]/g, " ");
+      (digits.match(/\b\d{8}\b/g) || []).forEach(d => {
+        found.add(`${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,8)}`);
+      });
+
+      return [...found];
+    }
+
     function extractLocation(text) {
       const tokens = norm(text).split(/\s+/).filter(Boolean);
       const clean = (t) => (t||"").replace(/[^A-Za-z0-9]/g,"").toUpperCase();
@@ -334,6 +378,7 @@
       }
       return "";
     }
+
     function extractQty(text) {
       const t = norm(text);
       const m = t.match(/수량\s*([0-9]\s*){1,5}/);
@@ -374,6 +419,37 @@
     }
 
     // =======================
+    // IKEA lookup via proxy
+    // =======================
+    async function fetchIkeaByArticle(article) {
+      const a = extractArticleStrong(article);
+      if (!a) return null;
+      try {
+        const res = await fetch(`/ikea_proxy.php?article=${encodeURIComponent(a)}`);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function maybeAutofillFromIkea(docId, currentItem) {
+      const art = extractArticleStrong(currentItem.articleNumber || "");
+      if (!art) return;
+
+      const data = await fetchIkeaByArticle(art);
+      if (!data) return;
+
+      // Only fill if empty (do not overwrite user edits)
+      const patch = {};
+      const cleanTitle = (data.title || "").replace(/\s*-\s*IKEA\s*$/i, "").trim();
+      if (cleanTitle && !(currentItem.productName || "").trim()) patch.productName = cleanTitle;
+      if ((data.description || "").trim() && !(currentItem.memo || "").trim()) patch.memo = (data.description || "").trim();
+
+      if (Object.keys(patch).length) await patchDoc(docId, patch);
+    }
+
+    // =======================
     // Firestore CRUD
     // =======================
     async function addBlankRow() {
@@ -391,6 +467,26 @@
         updatedBy: state.userId || "anon"
       };
       await col.add(doc);
+    }
+
+    async function addRowWithArticle(article) {
+      if (!col) return;
+      const a = extractArticleStrong(article);
+      const doc = {
+        arrived: false,
+        productName: "",
+        articleNumber: a || "",
+        location: "",
+        qty: null,
+        etaDow: "-",
+        memo: "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: state.userId || "anon"
+      };
+      const ref = await col.add(doc);
+      // after add, fetch IKEA and fill
+      await maybeAutofillFromIkea(ref.id, doc);
     }
 
     async function patchDoc(id, patch) {
@@ -419,7 +515,6 @@
     function fmtTime(ts) {
       if (!ts) return "";
       try {
-        // Firestore Timestamp
         const d = ts.toDate ? ts.toDate() : new Date(ts);
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -445,6 +540,19 @@
       return div;
     }
 
+    function computeDupes(items) {
+      const map = new Map();
+      items.forEach(it => {
+        const a = extractArticleStrong(it.articleNumber || "");
+        if (!a) return;
+        map.set(a, (map.get(a) || 0) + 1);
+      });
+      const dupes = new Set([...map.entries()].filter(([_,c]) => c >= 2).map(([a]) => a));
+      state.dupes = dupes;
+      $("dupeTag").textContent = `중복 ${dupes.size}`;
+      $("dupeTag").className = "pill" + (dupes.size ? " bad" : "");
+    }
+
     function render() {
       const total = state.items.length;
       const done = state.items.filter(it => it.arrived).length;
@@ -452,12 +560,13 @@
       $("openCount").textContent = `미도착 ${open}`;
       $("doneCount").textContent = `도착 ${done}`;
 
+      computeDupes(state.items);
+
       const tbody = $("tbody");
       tbody.innerHTML = "";
 
       const visible = state.onlyOpen ? state.items.filter(it => !it.arrived) : state.items;
 
-      // sort: not arrived first, then recently updated
       visible.sort((a,b) => {
         const aa = a.arrived ? 1 : 0;
         const bb = b.arrived ? 1 : 0;
@@ -469,6 +578,9 @@
 
       visible.forEach((it, idx) => {
         const tr = document.createElement("tr");
+        const artNorm = extractArticleStrong(it.articleNumber || "");
+        const isDupe = artNorm && state.dupes.has(artNorm);
+        if (isDupe) tr.classList.add("dupe");
 
         // select checkbox
         const tdSel = document.createElement("td");
@@ -506,12 +618,14 @@
         const tdArt = document.createElement("td");
         tdArt.className = "mono";
         const artDiv = editableCell(it.articleNumber || "", async (v) => {
-          const fixed = extractArticleStrong(v) || v; // allow user free text but try normalize
+          const fixed = extractArticleStrong(v) || v;
           await patchDoc(it.id, { articleNumber: fixed });
+          // try IKEA autofill after article update
+          await maybeAutofillFromIkea(it.id, { ...it, articleNumber: fixed });
         }, "mono");
-        if (it.articleNumber && !ARTICLE_RE.test(it.articleNumber)) {
+        if (isDupe) {
           artDiv.style.borderColor = "#ffd1d1";
-          artDiv.style.background = "#fff5f5";
+          artDiv.style.background = "#fff0f0";
         }
         tdArt.appendChild(artDiv);
 
@@ -554,6 +668,20 @@
         const who = (it.updatedBy || "").slice(0,8);
         tdTime.textContent = when ? `${when} · ${who}` : who;
 
+        const tdIkea = document.createElement("td");
+        tdIkea.className = "arrCell";
+        const linkBtn = document.createElement("button");
+        linkBtn.className = "btn secondary";
+        linkBtn.style.padding = "6px 8px";
+        linkBtn.textContent = "열기";
+        const artDigits = artNorm ? artNorm.replace(/\./g,"") : "";
+        linkBtn.disabled = !artDigits;
+        linkBtn.addEventListener("click", () => {
+          const url = artDigits ? `https://www.ikea.com/kr/ko/p/-${artDigits}/` : "https://www.ikea.com/kr/ko/";
+          window.open(url, "_blank", "noopener,noreferrer");
+        });
+        tdIkea.appendChild(linkBtn);
+
         tr.appendChild(tdSel);
         tr.appendChild(tdArr);
         tr.appendChild(tdNo);
@@ -564,6 +692,7 @@
         tr.appendChild(tdEta);
         tr.appendChild(tdMemo);
         tr.appendChild(tdTime);
+        tr.appendChild(tdIkea);
 
         tbody.appendChild(tr);
       });
@@ -603,6 +732,74 @@
     }
 
     // =======================
+    // OCR (article only)
+    // =======================
+    async function ocrImageToArticles(file) {
+      // Focus on digits and dot. Use English model for speed.
+      const { data } = await Tesseract.recognize(file, "eng", {
+        logger: (m) => {
+          if (m.status === "recognizing text" && typeof m.progress === "number") {
+            const pct = Math.round(m.progress * 100);
+            $("ocrProg").textContent = `OCR 진행: ${pct}% (파일: ${file.name})`;
+          }
+        }
+      });
+      const text = data && data.text ? data.text : "";
+      return extractAllArticles(text);
+    }
+
+    async function handleFiles(files) {
+      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
+      if (!files || !files.length) return;
+
+      if (state.ocrBusy) return;
+      state.ocrBusy = true;
+      $("ocrProg").textContent = "OCR 준비…";
+
+      try {
+        // process sequentially to avoid mobile crash
+        const all = [];
+        for (const f of files) {
+          const articles = await ocrImageToArticles(f);
+          articles.forEach(a => all.push(a));
+        }
+
+        const unique = [...new Set(all)].filter(Boolean);
+
+        if (!unique.length) {
+          alert("아티클 번호를 찾지 못했습니다. (이미지 해상도/선명도를 높이거나, 확대 스크린샷으로 다시 시도해 주세요)");
+          return;
+        }
+
+        // Add rows for each article; do not delete existing
+        // If duplicates already exist, still add (dupe warning will highlight)
+        for (const a of unique) {
+          await addRowWithArticle(a);
+        }
+
+        $("ocrProg").textContent = `완료: 아티클 ${unique.length}개 추가`;
+        setTimeout(()=>{$("ocrProg").textContent="";}, 3000);
+      } catch (e) {
+        console.error(e);
+        alert("OCR 처리 중 오류가 발생했습니다. (모바일 메모리 부족일 수 있어요. 이미지 장수를 줄여 다시 시도해 주세요)");
+      } finally {
+        state.ocrBusy = false;
+        $("imgInput").value = "";
+      }
+    }
+
+    // drag & drop
+    function wireDrop() {
+      const dz = $("dropZone");
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      ["dragenter","dragover","dragleave","drop"].forEach(ev => dz.addEventListener(ev, prevent));
+      dz.addEventListener("drop", async (e) => {
+        const files = [...(e.dataTransfer.files || [])].filter(f => f.type.startsWith("image/"));
+        await handleFiles(files);
+      });
+    }
+
+    // =======================
     // Events
     // =======================
     $("onlyOpen").addEventListener("change", (e) => {
@@ -622,10 +819,13 @@
       const lines = norm($("pasteText").value).split("\n").map(l=>l.trim()).filter(Boolean);
       if (!lines.length) { $("modalBg").style.display = "none"; return; }
 
-      // add sequentially (simple); for many lines, could batch later
       for (const line of lines) {
         const doc = parseLine(line) || null;
-        if (doc) await col.add(doc);
+        if (doc) {
+          const ref = await col.add(doc);
+          // if line contains article, try ikea fill
+          await maybeAutofillFromIkea(ref.id, doc);
+        }
       }
       $("modalBg").style.display = "none";
     });
@@ -649,7 +849,7 @@
     });
 
     $("exportJson").addEventListener("click", () => {
-      const payload = { boardId: BOARD_ID, exportedAt: nowISO(), items: state.items };
+      const payload = { boardId: BOARD_ID, exportedAt: new Date().toISOString(), items: state.items };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       downloadBlob(blob, `prenote-check-${BOARD_ID}.json`);
     });
@@ -660,8 +860,14 @@
       downloadBlob(blob, `prenote-check-${BOARD_ID}.csv`);
     });
 
+    $("imgInput").addEventListener("change", async (e) => {
+      const files = [...(e.target.files || [])].filter(f => f.type.startsWith("image/"));
+      await handleFiles(files);
+    });
+
     // Start
     (function boot(){
+      wireDrop();
       initFirebase();
     })();
   </script>
