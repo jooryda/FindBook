@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "openai": "4.21.0"
+    "openai": "4.21.0",
+    "@vercel/kv": "^1.0.0"
   }
 }
