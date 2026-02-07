@@ -275,6 +275,7 @@ label.btn{ white-space: nowrap !important; }
   <script>
 
 
+
     const $ = (id) => document.getElementById(id);
 
     // =======================
@@ -631,6 +632,37 @@ label.btn{ white-space: nowrap !important; }
         addArticlesFromInput();
       }
     });
+
+    $("deleteSelected")?.addEventListener("click", async () => {
+      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      if (!confirm(`선택 ${ids.length}개를 삭제할까요?`)) return;
+      await deleteDocs(ids);
+      selected.clear();
+      updateSelectedUi();
+    });
+
+    $("deleteAll")?.addEventListener("click", async () => {
+      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
+      if (!confirm("전체 항목을 삭제할까요?")) return;
+      const ids = state.items.map(it => it.id);
+      if (!ids.length) return;
+      await deleteDocs(ids);
+      selected.clear();
+      updateSelectedUi();
+    });
+
+    $("clearArrivedTop")?.addEventListener("click", async () => {
+      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
+      const arrived = state.items.filter(it => it.arrived).map(it => it.id);
+      if (!arrived.length) return alert("도착 완료 항목이 없습니다.");
+      if (!confirm(`도착 완료 ${arrived.length}개를 삭제할까요?`)) return;
+      await deleteDocs(arrived);
+      selected.clear();
+      updateSelectedUi();
+    });
+
 function render() {
       try {
       const total = state.items.length;
@@ -870,27 +902,18 @@ function render() {
     // =======================
     // Events
     // =======================
-    $("onlyOpen").addEventListener("change", (e) => {
+    $("\1")?.addEventListener("change", (e) => {
       state.onlyOpen = !!e.target.checked;
       render();
     });
 
-    $("addRow").addEventListener("click", async () => {
-      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const raw = prompt("단일 아티클 번호를 입력하세요.\n예: 50298102 또는 502.981.02");
-      if (raw === null) return;
-      const a = extractArticleStrong(raw);
-      if (!a) { alert("아티클 번호 형식이 아닙니다. (예: 000.000.00 / 8자리 숫자)"); return; }
-      await addRowWithArticle(a);
-    });
-
-
-    // Start
+        // Start
     (function boot(){
       wireDrop();
       initFirebase();
     })();
   
+
 
 </script>
 </body>
