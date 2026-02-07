@@ -175,6 +175,7 @@
   <tr>
     <th class="selCell">선택</th>
     <th class="arrCell">도착</th>
+    <th class="etaCell">도착요일</th>
     <th class="artCell">아티클</th>
     <th>제품명</th>
     <th class="qtyCell">수량</th>
@@ -256,6 +257,8 @@
       ocrBusy: false,
       dupes: new Set(),
     };
+
+    const ARRIVAL_OPTIONS = ["-", "일", "월", "화", "목"];
 
     const ETA_OPTIONS = ["-", "일", "월", "화", "목"];
 
@@ -410,6 +413,7 @@
       const name = rest || "";
       return {
         arrived: false,
+        arrivalDow: "-",
         productName: name,
         articleNumber: article || "",
         location: location || "",
@@ -429,6 +433,7 @@
       if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
       const doc = {
         arrived: false,
+        arrivalDow: "-",
         productName: "",
         articleNumber: "",
         location: "",
@@ -447,6 +452,7 @@
       const a = extractArticleStrong(article);
       const doc = {
         arrived: false,
+        arrivalDow: "-",
         productName: "",
         articleNumber: a || "",
         location: "",
@@ -580,6 +586,22 @@
         });
         tdArr.appendChild(cb);
 
+        // 도착요일
+        const tdArrDay = document.createElement("td");
+        tdArrDay.className = "etaCell";
+        const selArr = document.createElement("select");
+        selArr.className = "miniSelect";
+        ARRIVAL_OPTIONS.forEach(opt => {
+          const o = document.createElement("option");
+          o.value = opt; o.textContent = opt;
+          selArr.appendChild(o);
+        });
+        selArr.value = it.arrivalDow || "-";
+        selArr.addEventListener("change", async () => {
+          await patchDoc(it.id, { arrivalDow: selArr.value });
+        });
+        tdArrDay.appendChild(selArr);
+
         // 아티클
         const tdArt = document.createElement("td");
         tdArt.className = "artCell mono";
@@ -639,6 +661,7 @@
 
         tr.appendChild(tdSel);
         tr.appendChild(tdArr);
+        tr.appendChild(tdArrDay);
         tr.appendChild(tdArt);
         tr.appendChild(tdName);
         tr.appendChild(tdQty);
@@ -666,10 +689,11 @@
       URL.revokeObjectURL(a.href);
     }
     function toCsv(items) {
-      const headers = ["순번","도착(Y/N)","제품명","아티클","로케이션","수량","예상요일","메모","업데이트","업데이트자"];
+      const headers = ["순번","도착(Y/N)","도착요일","제품명","아티클","로케이션","수량","예상요일","메모","업데이트","업데이트자"];
       const rows = items.map((it, i) => ([
         String(i+1),
         it.arrived ? "Y" : "N",
+        it.arrivalDow || "-",
         (it.productName || "").replaceAll('"','""'),
         it.articleNumber || "",
         it.location || "",
@@ -761,8 +785,7 @@
 
     $("addRow").addEventListener("click", async () => {
       if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const raw = prompt("단일 아티클 번호를 입력하세요.
-예: 50298102 또는 502.981.02");
+      const raw = prompt("단일 아티클 번호를 입력하세요.\n예: 50298102 또는 502.981.02");
       if (raw === null) return;
       const a = extractArticleStrong(raw);
       if (!a) { alert("아티클 번호 형식이 아닙니다. (예: 000.000.00 / 8자리 숫자)"); return; }
@@ -778,8 +801,7 @@
       const raw = norm($("pasteText").value);
       const articles = extractAllArticles(raw);
       if (!articles.length) {
-        alert("아티클 번호를 찾지 못했습니다.
-예: [20378671, 60378669, 00378672] 또는 20378671,60378669");
+        alert("아티클 번호를 찾지 못했습니다.\n예: [20378671, 60378669, 00378672] 또는 20378671,60378669");
         return;
       }
       for (const a of articles) {
