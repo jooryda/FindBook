@@ -131,7 +131,7 @@
       <div class="drop" id="dropZone">
         <div class="row" style="justify-content:space-between;">
           <div>
-            <strong>이미지 업로드 (선택)</strong>
+            <strong>프리노트 스크린샷 이미지 업로드(선택)</strong>
             <div class="hint">스크린샷 여러 장을 한 번에 넣을 수 있어요. OCR은 “아티클(000.000.00)”만 뽑아서 자동 조회합니다.</div>
           </div>
           <div class="row">
@@ -151,8 +151,8 @@
             <input type="checkbox" id="onlyOpen" checked />
             도착완료 숨김(미도착만)
           </label>
-          <button class="btn secondary" id="addRow">+ 한 줄 추가</button>
-          <button class="btn secondary" id="pasteRow">여러 줄 붙여넣기</button>
+          <button class="btn secondary" id="addRow">단일 아티클 추가</button>
+          <button class="btn secondary" id="pasteRow">복수 아티클 추가</button>
           <button class="btn danger" id="deleteSelected" disabled>선택 삭제</button>
           <span class="muted" id="selCount">선택 0</span>
         </div>
@@ -163,10 +163,8 @@
       </div>
 
       <div class="muted" style="margin-top:8px;">
-        셀 클릭→수정→포커스 이동 시 자동 저장. 아티클 입력하면 <span class="mono">/ikea_proxy.php</span>로 IKEA 정보 자동 조회(제품명/메모).
       </div>
       <div class="muted" style="margin-top:6px;">
-        <span class="warn">중요</span>: <span class="mono">ikea_proxy.php</span>를 jooryda.com에 업로드해야 자동 조회가 동작합니다.
       </div>
     </div>
 
@@ -174,19 +172,17 @@
       <div class="tableWrap">
         <table>
           <thead>
-            <tr>
-              <th class="selCell">선택</th>
-              <th class="arrCell">도착</th>
-              <th class="numCell">순번</th>
-              <th>제품명</th>
-              <th>아티클</th>
-              <th class="hideMobile">로케이션</th>
-              <th class="qtyCell">수량</th>
-              <th class="etaCell">예상요일</th>
-              <th class="hideMobile">메모</th>
-              <th class="timeCell hideMobile">업데이트</th>
-</tr>
-          </thead>
+  <tr>
+    <th class="selCell">선택</th>
+    <th class="arrCell">도착</th>
+    <th class="artCell">아티클</th>
+    <th>제품명</th>
+    <th class="qtyCell">수량</th>
+    <th class="locCell hideMobile">로케이션</th>
+    <th class="etaCell">예상요일</th>
+    <th class="hideMobile">메모</th>
+  </tr>
+</thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -206,13 +202,13 @@
   <div class="modalBackdrop" id="modalBg">
     <div class="modal">
       <div class="row" style="justify-content:space-between; align-items:center;">
-        <h2>여러 줄 붙여넣기</h2>
+        <h2>복수 아티클 추가</h2>
         <button class="btn" id="closeModal">닫기</button>
       </div>
       <div class="muted" style="margin-bottom:8px;">
-        줄마다 1개 항목으로 추가됩니다. 최소: 아티클(<span class="mono">000.000.00</span>) 또는 제품명만 있어도 생성됩니다.
+        아래에 <span class="mono">[20378671, 60378669, 00378672]</span> 처럼 아티클 번호만 붙여넣으면, 해당 개수만큼 행이 생성됩니다. (제품명/수량/로케이션 등은 표에서 직접 입력)
       </div>
-      <textarea id="pasteText" placeholder="여기에 여러 줄을 붙여넣으세요. 예: SNUTTIG ... 502.981.02 S09G18 56"></textarea>
+      <textarea id="pasteText" placeholder="[20378671, 60378669, 00378672]  또는  20378671,60378669,00378672  또는 줄바꿈으로 여러 개"></textarea>
       <div class="row" style="margin-top:10px; justify-content:space-between;">
         <div class="tiny">추가 후에도 팀원에게 실시간 반영됩니다.</div>
         <div class="row">
@@ -544,6 +540,7 @@
 
       const visible = state.onlyOpen ? state.items.filter(it => !it.arrived) : state.items;
 
+      // Sort: 미도착 우선, 그 다음 최신 업데이트
       visible.sort((a,b) => {
         const aa = a.arrived ? 1 : 0;
         const bb = b.arrived ? 1 : 0;
@@ -553,13 +550,13 @@
         return tb - ta;
       });
 
-      visible.forEach((it, idx) => {
+      visible.forEach((it) => {
         const tr = document.createElement("tr");
         const artNorm = extractArticleStrong(it.articleNumber || "");
         const isDupe = artNorm && state.dupes.has(artNorm);
         if (isDupe) tr.classList.add("dupe");
 
-        // select checkbox
+        // 선택
         const tdSel = document.createElement("td");
         tdSel.className = "selCell";
         const sel = document.createElement("input");
@@ -572,7 +569,7 @@
         });
         tdSel.appendChild(sel);
 
-        // arrived checkbox
+        // 도착
         const tdArr = document.createElement("td");
         tdArr.className = "arrCell";
         const cb = document.createElement("input");
@@ -583,22 +580,12 @@
         });
         tdArr.appendChild(cb);
 
-        const tdNo = document.createElement("td");
-        tdNo.className = "numCell mono";
-        tdNo.textContent = String(idx+1);
-
-        const tdName = document.createElement("td");
-        tdName.appendChild(editableCell(it.productName || "", async (v) => {
-          await patchDoc(it.id, { productName: v });
-        }));
-
+        // 아티클
         const tdArt = document.createElement("td");
-        tdArt.className = "mono";
+        tdArt.className = "artCell mono";
         const artDiv = editableCell(it.articleNumber || "", async (v) => {
           const fixed = extractArticleStrong(v) || v;
           await patchDoc(it.id, { articleNumber: fixed });
-          // try IKEA autofill after article update
-
         }, "mono");
         if (isDupe) {
           artDiv.style.borderColor = "#ffd1d1";
@@ -606,12 +593,13 @@
         }
         tdArt.appendChild(artDiv);
 
-        const tdLoc = document.createElement("td");
-        tdLoc.className = "mono";
-        tdLoc.appendChild(editableCell(it.location || "", async (v) => {
-          await patchDoc(it.id, { location: v });
-        }, "mono"));
+        // 제품명
+        const tdName = document.createElement("td");
+        tdName.appendChild(editableCell(it.productName || "", async (v) => {
+          await patchDoc(it.id, { productName: v });
+        }));
 
+        // 수량
         const tdQty = document.createElement("td");
         tdQty.className = "qtyCell mono";
         tdQty.appendChild(editableCell(Number.isFinite(it.qty) ? String(it.qty) : "", async (v) => {
@@ -619,6 +607,14 @@
           await patchDoc(it.id, { qty: Number.isFinite(n) ? n : null });
         }, "mono"));
 
+        // 로케이션 (모바일 숨김)
+        const tdLoc = document.createElement("td");
+        tdLoc.className = "locCell mono hideMobile";
+        tdLoc.appendChild(editableCell(it.location || "", async (v) => {
+          await patchDoc(it.id, { location: v });
+        }, "mono"));
+
+        // 예상요일
         const tdEta = document.createElement("td");
         tdEta.className = "etaCell";
         const selEta = document.createElement("select");
@@ -634,30 +630,26 @@
         });
         tdEta.appendChild(selEta);
 
+        // 메모 (모바일 숨김)
         const tdMemo = document.createElement("td");
+        tdMemo.className = "hideMobile";
         tdMemo.appendChild(editableCell(it.memo || "", async (v) => {
           await patchDoc(it.id, { memo: v });
         }, "cell-muted"));
 
-        const tdTime = document.createElement("td");
-        tdTime.className = "timeCell mono hideMobile";
-        const when = fmtTime(it.updatedAt);
-        const who = (it.updatedBy || "").slice(0,8);
-        tdTime.textContent = when ? `${when} · ${who}` : who;
-tr.appendChild(tdSel);
+        tr.appendChild(tdSel);
         tr.appendChild(tdArr);
-        tr.appendChild(tdNo);
-        tr.appendChild(tdName);
         tr.appendChild(tdArt);
-        tr.appendChild(tdLoc);
+        tr.appendChild(tdName);
         tr.appendChild(tdQty);
+        tr.appendChild(tdLoc);
         tr.appendChild(tdEta);
         tr.appendChild(tdMemo);
-        tr.appendChild(tdTime);
-tbody.appendChild(tr);
+
+        tbody.appendChild(tr);
       });
 
-      // purge selection for deleted docs
+      // 선택 상태 정리
       const ids = new Set(state.items.map(it => it.id));
       state.selected = new Set([...state.selected].filter(id => ids.has(id)));
       updateSelectionUI();
@@ -767,30 +759,35 @@ tbody.appendChild(tr);
       render();
     });
 
-    $("addRow").addEventListener("click", () => addBlankRow());
-
-    // Paste modal
+    $("addRow").addEventListener("click", async () => {
+      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
+      const raw = prompt("단일 아티클 번호를 입력하세요.
+예: 50298102 또는 502.981.02");
+      if (raw === null) return;
+      const a = extractArticleStrong(raw);
+      if (!a) { alert("아티클 번호 형식이 아닙니다. (예: 000.000.00 / 8자리 숫자)"); return; }
+      await addRowWithArticle(a);
+    });
+// Paste modal
     $("pasteRow").addEventListener("click", () => { $("modalBg").style.display = "flex"; $("pasteText").value = ""; $("pasteText").focus(); });
     $("closeModal").addEventListener("click", () => { $("modalBg").style.display = "none"; });
     $("modalBg").addEventListener("click", (e) => { if (e.target === $("modalBg")) $("modalBg").style.display = "none"; });
 
     $("confirmPaste").addEventListener("click", async () => {
       if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const lines = norm($("pasteText").value).split("\n").map(l=>l.trim()).filter(Boolean);
-      if (!lines.length) { $("modalBg").style.display = "none"; return; }
-
-      for (const line of lines) {
-        const doc = parseLine(line) || null;
-        if (doc) {
-          const ref = await col.add(doc);
-          // if line contains article, try ikea fill
-
-        }
+      const raw = norm($("pasteText").value);
+      const articles = extractAllArticles(raw);
+      if (!articles.length) {
+        alert("아티클 번호를 찾지 못했습니다.
+예: [20378671, 60378669, 00378672] 또는 20378671,60378669");
+        return;
+      }
+      for (const a of articles) {
+        await addRowWithArticle(a);
       }
       $("modalBg").style.display = "none";
     });
-
-    $("deleteSelected").addEventListener("click", async () => {
+$("deleteSelected").addEventListener("click", async () => {
       const n = state.selected.size;
       if (!n) return;
       if (!confirm(`선택한 ${n}개 항목을 삭제할까요?`)) return;
