@@ -273,7 +273,13 @@ label.btn{ white-space: nowrap !important; }
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
+
+  function safeClass(id, className){
+    const el = $(id);
+    if (el) el.className = className;
+  }
 
 
 
@@ -604,7 +610,7 @@ let connTimer = null;
       const dupes = new Set([...map.entries()].filter(([_,c]) => c >= 2).map(([a]) => a));
       state.dupes = dupes;
       safeText("dupeTag", `중복 ${dupes.size}`);
-      $("dupeTag").className = "pill" + (dupes.size ? " bad" : "");
+      safeClass("dupeTag", "pill" + (dupes.size ? " bad" : ""));
     }
 
     // Quick add: 입력한 아티클 번호(복수)를 파싱해서 행 추가
@@ -919,6 +925,7 @@ function render() {
       initFirebase();
     })();
   
+
 
 
 
