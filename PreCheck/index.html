@@ -28,7 +28,7 @@
     .kpi{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
     .tableWrap{ overflow:auto; border:1px solid var(--line); border-radius: 14px; margin-top: 10px; background:#fff; }
-    table{ width:100%; border-collapse: collapse; min-width: 1080px; }
+    table{ width:100%; border-collapse: collapse; min-width: 960px; }
     thead th{
       position: sticky; top: 0; z-index: 1;
       background:#fafafa; border-bottom:1px solid var(--line);
@@ -50,6 +50,7 @@
     .etaCell{ width: 92px; }
     .qtyCell{ width: 90px; text-align: right; }
     .timeCell{ width: 160px; }
+    .dateCell{ width: 120px; }
     .mono{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
     .edit{ border:1px dashed transparent; border-radius: 10px; padding: 4px 6px; }
@@ -91,7 +92,7 @@
 
     @media (max-width: 520px){
       .wrap{ padding: 10px; padding-bottom: 112px; }
-      table{ min-width: 980px; }
+      table{ min-width: 960px; }
       thead th, tbody td{
       word-break: break-word; padding: 6px 6px; }
       .edit{ padding: 3px 5px; }
@@ -132,7 +133,7 @@
         <div class="row" style="justify-content:space-between;">
           <div>
             <strong>프리노트 스크린샷 이미지 업로드(선택)</strong>
-            <div class="hint">스크린샷 여러 장을 한 번에 넣을 수 있어요. OCR은 “아티클(000.000.00)”만 뽑아서 자동 조회합니다.</div>
+            <div class="hint">스크린샷 여러 장을 한 번에 넣을 수 있어요. OCR은 “아티클(000.000.00)”만 뽑아서 자동 추가합니다.</div>
           </div>
           <div class="row">
             <label class="btn secondary" for="imgInput">이미지 선택(여러개)</label>
@@ -154,6 +155,7 @@
           <button class="btn secondary" id="addRow">단일 아티클 추가</button>
           <button class="btn secondary" id="pasteRow">복수 아티클 추가</button>
           <button class="btn danger" id="deleteSelected" disabled>선택 삭제</button>
+          <button class="btn danger" id="deleteAll">전체 삭제</button>
           <span class="muted" id="selCount">선택 0</span>
         </div>
         <div class="kpi">
@@ -175,13 +177,13 @@
   <tr>
     <th class="selCell">선택</th>
     <th class="arrCell">도착</th>
-    <th class="etaCell">도착요일</th>
+    <th class="etaCell">도착예상요일</th>
     <th class="artCell">아티클</th>
     <th>제품명</th>
     <th class="qtyCell">수량</th>
     <th class="locCell hideMobile">로케이션</th>
-    <th class="etaCell">예상요일</th>
     <th class="hideMobile">메모</th>
+    <th class="dateCell hideMobile">입력날짜</th>
   </tr>
 </thead>
           <tbody id="tbody"></tbody>
@@ -257,9 +259,6 @@
       ocrBusy: false,
       dupes: new Set(),
     };
-
-    const ARRIVAL_OPTIONS = ["-", "일", "월", "화", "목"];
-
     const ETA_OPTIONS = ["-", "일", "월", "화", "목"];
 
     // =======================
@@ -413,7 +412,6 @@
       const name = rest || "";
       return {
         arrived: false,
-        arrivalDow: "-",
         productName: name,
         articleNumber: article || "",
         location: location || "",
@@ -433,7 +431,6 @@
       if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
       const doc = {
         arrived: false,
-        arrivalDow: "-",
         productName: "",
         articleNumber: "",
         location: "",
@@ -452,7 +449,6 @@
       const a = extractArticleStrong(article);
       const doc = {
         arrived: false,
-        arrivalDow: "-",
         productName: "",
         articleNumber: a || "",
         location: "",
@@ -480,6 +476,18 @@
       const batch = db.batch();
       ids.forEach(id => batch.delete(col.doc(id)));
       await batch.commit();
+    }
+
+    async function deleteAllDocs() {
+      if (!col) return;
+      const ids = state.items.map(it => it.id);
+      const chunkSize = 450; // keep below 500 ops/batch
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const batch = db.batch();
+        chunk.forEach(id => batch.delete(col.doc(id)));
+        await batch.commit();
+      }
     }
 
     // =======================
@@ -585,23 +593,6 @@
           await patchDoc(it.id, { arrived: cb.checked });
         });
         tdArr.appendChild(cb);
-
-        // 도착요일
-        const tdArrDay = document.createElement("td");
-        tdArrDay.className = "etaCell";
-        const selArr = document.createElement("select");
-        selArr.className = "miniSelect";
-        ARRIVAL_OPTIONS.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt; o.textContent = opt;
-          selArr.appendChild(o);
-        });
-        selArr.value = it.arrivalDow || "-";
-        selArr.addEventListener("change", async () => {
-          await patchDoc(it.id, { arrivalDow: selArr.value });
-        });
-        tdArrDay.appendChild(selArr);
-
         // 아티클
         const tdArt = document.createElement("td");
         tdArt.className = "artCell mono";
@@ -635,23 +626,6 @@
         tdLoc.appendChild(editableCell(it.location || "", async (v) => {
           await patchDoc(it.id, { location: v });
         }, "mono"));
-
-        // 예상요일
-        const tdEta = document.createElement("td");
-        tdEta.className = "etaCell";
-        const selEta = document.createElement("select");
-        selEta.className = "miniSelect";
-        ETA_OPTIONS.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt; o.textContent = opt;
-          selEta.appendChild(o);
-        });
-        selEta.value = it.etaDow || "-";
-        selEta.addEventListener("change", async () => {
-          await patchDoc(it.id, { etaDow: selEta.value });
-        });
-        tdEta.appendChild(selEta);
-
         // 메모 (모바일 숨김)
         const tdMemo = document.createElement("td");
         tdMemo.className = "hideMobile";
@@ -659,18 +633,23 @@
           await patchDoc(it.id, { memo: v });
         }, "cell-muted"));
 
+                // 입력날짜(자동)
+        const tdCreated = document.createElement("td");
+        tdCreated.className = "dateCell mono hideMobile";
+        tdCreated.textContent = (it.createdAt ? fmtTime(it.createdAt).slice(0,10) : "");
+
         tr.appendChild(tdSel);
         tr.appendChild(tdArr);
-        tr.appendChild(tdArrDay);
+        tr.appendChild(tdEta);
         tr.appendChild(tdArt);
         tr.appendChild(tdName);
         tr.appendChild(tdQty);
         tr.appendChild(tdLoc);
-        tr.appendChild(tdEta);
         tr.appendChild(tdMemo);
+        tr.appendChild(tdCreated);
 
         tbody.appendChild(tr);
-      });
+});
 
       // 선택 상태 정리
       const ids = new Set(state.items.map(it => it.id));
@@ -689,23 +668,22 @@
       URL.revokeObjectURL(a.href);
     }
     function toCsv(items) {
-      const headers = ["순번","도착(Y/N)","도착요일","제품명","아티클","로케이션","수량","예상요일","메모","업데이트","업데이트자"];
-      const rows = items.map((it, i) => ([
-        String(i+1),
+      const headers = ["도착(Y/N)","도착예상요일","아티클","제품명","수량","로케이션","메모","입력날짜","업데이트","업데이트자"];
+      const rows = items.map((it) => ([
         it.arrived ? "Y" : "N",
-        it.arrivalDow || "-",
-        (it.productName || "").replaceAll('"','""'),
-        it.articleNumber || "",
-        it.location || "",
-        Number.isFinite(it.qty) ? String(it.qty) : "",
         it.etaDow || "-",
+        it.articleNumber || "",
+        (it.productName || "").replaceAll('"','""'),
+        Number.isFinite(it.qty) ? String(it.qty) : "",
+        it.location || "",
         (it.memo || "").replaceAll('"','""'),
+        (fmtTime(it.createdAt) || "").slice(0,10),
         fmtTime(it.updatedAt) || "",
         it.updatedBy || ""
       ]));
       const lines = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(","));
       return lines.join("\n");
-    }
+}
 
     // =======================
     // OCR (article only)
@@ -817,6 +795,16 @@ $("deleteSelected").addEventListener("click", async () => {
       state.selected = new Set();
       updateSelectionUI();
       await deleteDocs(ids);
+    });
+
+    $("deleteAll").addEventListener("click", async () => {
+      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
+      const n = state.items.length;
+      if (!n) return alert("삭제할 항목이 없습니다.");
+      if (!confirm(`현재 보드의 전체 ${n}개 항목을 삭제할까요?`)) return;
+      state.selected = new Set();
+      updateSelectionUI();
+      await deleteAllDocs();
     });
 
     $("clearArrived").addEventListener("click", async () => {
