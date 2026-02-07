@@ -117,7 +117,42 @@
       .connLabel{ display:none; }
       .connMini{ top:10px; right:10px; padding:6px 8px; }
     }
-  </style>
+  
+/* === UI tweaks (focus list & compact controls) === */
+.uploaderDetails{ width:100%; margin-bottom: 10px; }
+.detailsSummary{
+  cursor:pointer;
+  user-select:none;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(0,0,0,.15);
+  border-radius: 12px;
+  background: rgba(0,0,0,.02);
+}
+.detailsSummary::before{ content:"▸"; color:#374151; }
+.uploaderDetails[open] .detailsSummary::before{ content:"▾"; }
+#dropZone{ margin-top:10px; }
+
+.quickAdd{ width:100%; padding: 6px 0 10px; }
+.quickAddLabel{ font-weight:900; }
+.quickAddForm{ display:flex; gap:10px; align-items:center; }
+.quickAddForm input{ flex:1; min-width: 180px; }
+.quickAddHint{ color: rgba(0,0,0,.55); font-size:12px; }
+
+.btn{
+  padding: 8px 10px !important;
+  font-size: 12px !important;
+  border-radius: 10px !important;
+  white-space: nowrap !important;
+  line-height: 1.1;
+  min-width: 92px;
+  text-align:center;
+}
+label.btn{ white-space: nowrap !important; }
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -138,7 +173,10 @@
     </div>
 
     <div class="panel">
-      <div class="drop" id="dropZone">
+      <details id="uploaderDetails" class="uploaderDetails">
+  <summary class="detailsSummary">프리노트 스크린샷 업로드(선택)</summary>
+  <div class="drop" id="dropZone">
+
         <div class="row" style="justify-content:space-between;">
           <div>
             <strong>프리노트 스크린샷 이미지 업로드(선택)</strong>
@@ -150,12 +188,23 @@
           </div>
         </div>
         <div class="row" style="margin-top:8px;">
-          <span class="pill warn">OCR은 100%가 아닙니다. 추출 후 표에서 아티클을 꼭 한번 확인하세요.</span>
           <span class="progress" id="ocrProg"></span>
         </div>
-      </div>
+        </div>
+</details>
 
-      <div class="row controls" style="justify-content:space-between; margin-top:10px;">
+<div class="quickAdd">
+  <div class="quickAddRow">
+    <div class="quickAddLabel">아티클 번호 입력</div>
+    <div class="quickAddForm">
+      <input id="quickArticles" type="text" inputmode="numeric" placeholder="아티클 번호 입력 (공백/콤마/슬래시로 여러개) 예: 20378671, 60378669 / 00378672" />
+      <button class="btn primary" id="quickAddBtn">추가</button>
+    </div>
+    <div class="quickAddHint">각 아티클은 8자리 이상 입력해야 합니다.</div>
+  </div>
+</div>
+
+<div class="row controls style="justify-content:space-between; margin-top:10px;">
         <div class="row">
           <label class="toggle wide">
             <input type="checkbox" id="onlyOpen" checked />
@@ -565,7 +614,38 @@
       $("dupeTag").className = "pill" + (dupes.size ? " bad" : "");
     }
 
-    function render() {
+    // Quick add: 입력한 아티클 번호(복수)를 파싱해서 행 추가
+    function parseArticleList(raw) {
+      const parts = String(raw || "")
+        .replace(/[\n\r\t]/g, " ")
+        .split(/[^0-9]+/)
+        .filter(Boolean);
+      return parts;
+    }
+
+    async function addArticlesFromInput() {
+      const raw = $("quickArticles")?.value || "";
+      const parts = parseArticleList(raw);
+      const valid = parts.filter(p => p.length >= 8);
+      if (!valid.length) {
+        alert("아티클 번호를 8자리 이상으로 입력하세요. (공백/콤마/슬래시로 여러 개 입력 가능)");
+        return;
+      }
+      const uniq = Array.from(new Set(valid));
+      for (const a of uniq) {
+        await addRowWithArticle(a);
+      }
+      if ($("quickArticles")) $("quickArticles").value = "";
+    }
+
+    $("quickAddBtn")?.addEventListener("click", addArticlesFromInput);
+    $("quickArticles")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addArticlesFromInput();
+      }
+    });
+function render() {
       try {
       const total = state.items.length;
       const done = state.items.filter(it => it.arrived).length;
