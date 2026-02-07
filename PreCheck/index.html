@@ -273,6 +273,8 @@ label.btn{ white-space: nowrap !important; }
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
+
 
 
 
@@ -560,8 +562,8 @@ let connTimer = null;
     // =======================
     function updateSelectionUI() {
       const n = state.selected.size;
-      $("selCount").textContent = `선택 ${n}`;
-      $("deleteSelected").disabled = (n === 0);
+      safeText("selCount", `선택 ${n}`);
+      if ($("\1")) $("\1").disabled = (n === 0);
     }
 
     function fmtTime(ts) {
@@ -601,7 +603,7 @@ let connTimer = null;
       });
       const dupes = new Set([...map.entries()].filter(([_,c]) => c >= 2).map(([a]) => a));
       state.dupes = dupes;
-      $("dupeTag").textContent = `중복 ${dupes.size}`;
+      safeText("dupeTag", `중복 ${dupes.size}`);
       $("dupeTag").className = "pill" + (dupes.size ? " bad" : "");
     }
 
@@ -672,8 +674,8 @@ function render() {
       const total = state.items.length;
       const done = state.items.filter(it => it.arrived).length;
       const open = total - done;
-      $("openCount").textContent = `미도착 ${open}`;
-      $("doneCount").textContent = `도착 ${done}`;
+      safeText("openCount", `미도착 ${open}`);
+      safeText("doneCount", `도착 ${done}`);
 
       computeDupes(state.items);
 
@@ -844,7 +846,7 @@ function render() {
         logger: (m) => {
           if (m.status === "recognizing text" && typeof m.progress === "number") {
             const pct = Math.round(m.progress * 100);
-            $("ocrProg").textContent = `OCR 진행: ${pct}% (파일: ${file.name})`;
+            safeText("ocrProg", `OCR 진행: ${pct}% (파일: ${file.name})`);
           }
         }
       });
@@ -858,7 +860,7 @@ function render() {
 
       if (state.ocrBusy) return;
       state.ocrBusy = true;
-      $("ocrProg").textContent = "OCR 준비…";
+      safeText("ocrProg", "OCR 준비…");
 
       try {
         // process sequentially to avoid mobile crash
@@ -881,8 +883,8 @@ function render() {
           await addRowWithArticle(a);
         }
 
-        $("ocrProg").textContent = `완료: 아티클 ${unique.length}개 추가`;
-        setTimeout(()=>{$("ocrProg").textContent="";}, 3000);
+        safeText("ocrProg", `완료: 아티클 ${unique.length}개 추가`);
+        setTimeout(()=>{safeText("ocrProg", "");}, 3000);
       } catch (e) {
         console.error(e);
         alert("OCR 처리 중 오류가 발생했습니다. (모바일 메모리 부족일 수 있어요. 이미지 장수를 줄여 다시 시도해 주세요)");
@@ -917,6 +919,7 @@ function render() {
       initFirebase();
     })();
   
+
 
 
 
