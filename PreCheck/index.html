@@ -36,6 +36,7 @@
       padding: 8px 8px; white-space: nowrap;
     }
     tbody td{
+      word-break: break-word;
       border-bottom:1px solid #f1f3f6;
       padding: 8px 8px; font-size: 13px; vertical-align: top;
     }
@@ -91,11 +92,20 @@
     @media (max-width: 520px){
       .wrap{ padding: 10px; padding-bottom: 112px; }
       table{ min-width: 980px; }
-      thead th, tbody td{ padding: 6px 6px; }
+      thead th, tbody td{
+      word-break: break-word; padding: 6px 6px; }
       .edit{ padding: 3px 5px; }
       .timeCell{ width: 140px; }
       .btn{ width: 100%; }
       .bottomInner .btn{ width:auto; }
+    }
+  
+    /* Mobile: hide less important columns to reduce horizontal scroll */
+    @media (max-width: 720px){
+      .hideMobile{ display:none !important; }
+      table{ table-layout: auto; }
+      thead th, tbody td{
+      word-break: break-word; padding: 7px 6px; }
     }
   </style>
 </head>
@@ -107,7 +117,7 @@
         목적: 익일 오더(배송) 확인 후 <b>미도착 물품을 팀이 공유</b>해서 중복 오더를 방지하고, 다음 도착(일/월/화/목 등)을 함께 추적합니다.
       </div>
       <div class="muted" style="margin-top:6px;">
-        입력 방법 2가지: (1) 표에서 직접 입력/추가 (2) 이미지 업로드 → <b>아티클 번호만 OCR 추출</b> → IKEA 자동 조회
+        입력 방법 2가지: (1) 표에서 직접 입력/추가 (2) 이미지 업로드 → <b>아티클 번호만 OCR 추출</b> → 행 자동 추가
       </div>
       <div class="muted" style="margin-top:6px;">
         상태: <span id="conn" class="pill">연결 준비</span>
@@ -170,13 +180,12 @@
               <th class="numCell">순번</th>
               <th>제품명</th>
               <th>아티클</th>
-              <th>로케이션</th>
+              <th class="hideMobile">로케이션</th>
               <th class="qtyCell">수량</th>
               <th class="etaCell">예상요일</th>
-              <th>메모</th>
-              <th class="timeCell">업데이트</th>
-              <th class="arrCell">IKEA</th>
-            </tr>
+              <th class="hideMobile">메모</th>
+              <th class="timeCell hideMobile">업데이트</th>
+</tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -418,37 +427,6 @@
     }
 
     // =======================
-    // IKEA lookup via proxy
-    // =======================
-    async function fetchIkeaByArticle(article) {
-      const a = extractArticleStrong(article);
-      if (!a) return null;
-      try {
-        const res = await fetch(`/ikea_proxy.php?article=${encodeURIComponent(a)}`);
-        if (!res.ok) return null;
-        return await res.json();
-      } catch (e) {
-        return null;
-      }
-    }
-
-    async function maybeAutofillFromIkea(docId, currentItem) {
-      const art = extractArticleStrong(currentItem.articleNumber || "");
-      if (!art) return;
-
-      const data = await fetchIkeaByArticle(art);
-      if (!data) return;
-
-      // Only fill if empty (do not overwrite user edits)
-      const patch = {};
-      const cleanTitle = (data.title || "").replace(/\s*-\s*IKEA\s*$/i, "").trim();
-      if (cleanTitle && !(currentItem.productName || "").trim()) patch.productName = cleanTitle;
-      if ((data.description || "").trim() && !(currentItem.memo || "").trim()) patch.memo = (data.description || "").trim();
-
-      if (Object.keys(patch).length) await patchDoc(docId, patch);
-    }
-
-    // =======================
     // Firestore CRUD
     // =======================
     async function addBlankRow() {
@@ -485,7 +463,7 @@
       };
       const ref = await col.add(doc);
       // after add, fetch IKEA and fill
-      await maybeAutofillFromIkea(ref.id, doc);
+
     }
 
     async function patchDoc(id, patch) {
@@ -620,7 +598,7 @@
           const fixed = extractArticleStrong(v) || v;
           await patchDoc(it.id, { articleNumber: fixed });
           // try IKEA autofill after article update
-          await maybeAutofillFromIkea(it.id, { ...it, articleNumber: fixed });
+
         }, "mono");
         if (isDupe) {
           artDiv.style.borderColor = "#ffd1d1";
@@ -662,26 +640,11 @@
         }, "cell-muted"));
 
         const tdTime = document.createElement("td");
-        tdTime.className = "timeCell mono";
+        tdTime.className = "timeCell mono hideMobile";
         const when = fmtTime(it.updatedAt);
         const who = (it.updatedBy || "").slice(0,8);
         tdTime.textContent = when ? `${when} · ${who}` : who;
-
-        const tdIkea = document.createElement("td");
-        tdIkea.className = "arrCell";
-        const linkBtn = document.createElement("button");
-        linkBtn.className = "btn secondary";
-        linkBtn.style.padding = "6px 8px";
-        linkBtn.textContent = "열기";
-        const artDigits = artNorm ? artNorm.replace(/\./g,"") : "";
-        linkBtn.disabled = !artDigits;
-        linkBtn.addEventListener("click", () => {
-          const url = artDigits ? `https://www.ikea.com/kr/ko/p/-${artDigits}/` : "https://www.ikea.com/kr/ko/";
-          window.open(url, "_blank", "noopener,noreferrer");
-        });
-        tdIkea.appendChild(linkBtn);
-
-        tr.appendChild(tdSel);
+tr.appendChild(tdSel);
         tr.appendChild(tdArr);
         tr.appendChild(tdNo);
         tr.appendChild(tdName);
@@ -691,9 +654,7 @@
         tr.appendChild(tdEta);
         tr.appendChild(tdMemo);
         tr.appendChild(tdTime);
-        tr.appendChild(tdIkea);
-
-        tbody.appendChild(tr);
+tbody.appendChild(tr);
       });
 
       // purge selection for deleted docs
@@ -823,7 +784,7 @@
         if (doc) {
           const ref = await col.add(doc);
           // if line contains article, try ikea fill
-          await maybeAutofillFromIkea(ref.id, doc);
+
         }
       }
       $("modalBg").style.display = "none";
