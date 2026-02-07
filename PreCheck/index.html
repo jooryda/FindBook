@@ -541,6 +541,7 @@
     }
 
     function render() {
+      try {
       const total = state.items.length;
       const done = state.items.filter(it => it.arrived).length;
       const open = total - done;
@@ -593,6 +594,23 @@
           await patchDoc(it.id, { arrived: cb.checked });
         });
         tdArr.appendChild(cb);
+
+        // 도착예상요일
+        const tdEta = document.createElement("td");
+        tdEta.className = "etaCell";
+        const selEta = document.createElement("select");
+        selEta.className = "miniSelect";
+        ETA_OPTIONS.forEach(opt => {
+          const o = document.createElement("option");
+          o.value = opt; o.textContent = opt;
+          selEta.appendChild(o);
+        });
+        selEta.value = it.etaDow || "-";
+        selEta.addEventListener("change", async () => {
+          await patchDoc(it.id, { etaDow: selEta.value });
+        });
+        tdEta.appendChild(selEta);
+
         // 아티클
         const tdArt = document.createElement("td");
         tdArt.className = "artCell mono";
@@ -655,6 +673,11 @@
       const ids = new Set(state.items.map(it => it.id));
       state.selected = new Set([...state.selected].filter(id => ids.has(id)));
       updateSelectionUI();
+      } catch (e) {
+        console.error(e);
+        const st = document.getElementById('status');
+        if (st) st.textContent = '렌더 오류';
+      }
     }
 
     // =======================
