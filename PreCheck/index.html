@@ -90,23 +90,19 @@
     .progress .mono{ font-weight: 900; }
     .warn{ color: var(--danger); font-weight: 950; font-size: 12px; }
 
-    @media (max-width: 520px){
-      .wrap{ padding: 10px; padding-bottom: 112px; }
-      table{ min-width: 960px; }
-      thead th, tbody td{
-      word-break: break-word; padding: 6px 6px; }
-      .edit{ padding: 3px 5px; }
-      .timeCell{ width: 140px; }
-      .btn{ width: 100%; }
-      .bottomInner .btn{ width:auto; }
-    }
+    
   
     /* Mobile: hide less important columns to reduce horizontal scroll */
+    
+  
     @media (max-width: 720px){
-      .hideMobile{ display:none !important; }
-      table{ table-layout: auto; }
-      thead th, tbody td{
-      word-break: break-word; padding: 7px 6px; }
+      .controls{ display:flex; flex-wrap:wrap; gap:8px; }
+      .controls .btn{ flex: 1 0 calc(25% - 8px); padding:10px 8px; font-size:13px; }
+      .controls .btn.wide{ flex-basis: calc(50% - 8px); }
+      .controls .toggle.wide{ flex: 1 0 100%; }
+      .controls .muted.wide{ flex: 1 0 100%; }
+      .controls .row{ flex-wrap:wrap; gap:8px; }
+      .controls .counts{ flex: 1 0 100%; justify-content:flex-end; }
     }
   </style>
 </head>
@@ -120,11 +116,11 @@
       <div class="muted" style="margin-top:6px;">
         입력 방법 2가지: (1) 표에서 직접 입력/추가 (2) 이미지 업로드 → <b>아티클 번호만 OCR 추출</b> → 행 자동 추가
       </div>
-      <div class="muted" style="margin-top:6px;">
-        상태: <span id="conn" class="pill">연결 준비</span>
-        <span class="pill" id="userTag">사용자: -</span>
-        <span class="pill" id="boardTag">보드: prenote-main</span>
-        <span class="pill" id="dupeTag">중복 0</span>
+      
+      <div class="muted" style="margin-top:8px; display:flex; align-items:center; gap:10px;">
+        <span class="statusDot" id="statusDot" aria-label="연결 상태"></span>
+        <span class="muted" id="connText">연결 준비</span>
+        <span class="muted" id="dupeText" style="margin-left:auto;">중복 0</span>
       </div>
     </div>
 
@@ -133,7 +129,7 @@
         <div class="row" style="justify-content:space-between;">
           <div>
             <strong>프리노트 스크린샷 이미지 업로드(선택)</strong>
-            <div class="hint">스크린샷 여러 장을 한 번에 넣을 수 있어요. OCR은 “아티클(000.000.00)”만 뽑아서 자동 추가합니다.</div>
+            <div class="hint">스크린샷 여러 장을 한 번에 넣을 수 있어요. 단 아티클 넘버만 리스트로 가져오는 것이니 제품명이나 수량 등은 수기로 입력 부탁드려요. OCR은 “아티클(000.000.00)”만 뽑아서 자동 추가합니다.</div>
           </div>
           <div class="row">
             <label class="btn secondary" for="imgInput">이미지 선택(여러개)</label>
@@ -146,9 +142,9 @@
         </div>
       </div>
 
-      <div class="row" style="justify-content:space-between; margin-top:10px;">
+      <div class="row controls" style="justify-content:space-between; margin-top:10px;">
         <div class="row">
-          <label class="toggle">
+          <label class="toggle wide">
             <input type="checkbox" id="onlyOpen" checked />
             도착완료 숨김(미도착만)
           </label>
@@ -156,9 +152,9 @@
           <button class="btn secondary" id="pasteRow">복수 아티클 추가</button>
           <button class="btn danger" id="deleteSelected" disabled>선택 삭제</button>
           <button class="btn danger" id="deleteAll">전체 삭제</button>
-          <span class="muted" id="selCount">선택 0</span>
+          <span class="muted wide" id="selCount">선택 0</span>
         </div>
-        <div class="kpi">
+        <div class="kpi counts">
           <span class="pill" id="openCount">미도착 0</span>
           <span class="pill" id="doneCount">도착 0</span>
         </div>
@@ -181,9 +177,9 @@
     <th class="artCell">아티클</th>
     <th>제품명</th>
     <th class="qtyCell">수량</th>
-    <th class="locCell hideMobile">로케이션</th>
+    <th class="locCell">로케이션</th>
     <th class="hideMobile">메모</th>
-    <th class="dateCell hideMobile">입력날짜</th>
+    <th class="dateCell">입력날짜</th>
   </tr>
 </thead>
           <tbody id="tbody"></tbody>
@@ -292,8 +288,7 @@
       // Anonymous auth
       const res = await auth.signInAnonymously();
       state.userId = res.user && res.user.uid ? res.user.uid : "anon";
-      $("userTag").textContent = `사용자: ${state.userId.slice(0,8)}`;
-
+      
       col = db.collection("boards").doc(BOARD_ID).collection("items");
 
       col.orderBy("updatedAt", "desc").onSnapshot((snap) => {
@@ -640,7 +635,7 @@
 
         // 로케이션 (모바일 숨김)
         const tdLoc = document.createElement("td");
-        tdLoc.className = "locCell mono hideMobile";
+        tdLoc.className = "locCell mono";
         tdLoc.appendChild(editableCell(it.location || "", async (v) => {
           await patchDoc(it.id, { location: v });
         }, "mono"));
@@ -653,7 +648,7 @@
 
                 // 입력날짜(자동)
         const tdCreated = document.createElement("td");
-        tdCreated.className = "dateCell mono hideMobile";
+        tdCreated.className = "dateCell mono";
         tdCreated.textContent = (it.createdAt ? fmtTime(it.createdAt).slice(0,10) : "");
 
         tr.appendChild(tdSel);
