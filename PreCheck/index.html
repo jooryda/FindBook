@@ -159,10 +159,10 @@ label.btn{ white-space: nowrap !important; }
     <div class="panel headerPanel">
       <h1>[프리노트 체크]</h1>
       <div class="muted">
-        목적: 익일 오더(배송) 확인 후 <b>미도착 물품을 팀이 공유</b>해서 중복 오더를 방지하고, 다음 도착(일/월/화/목 등)을 함께 추적합니다.
+        프리 혹은 오더 건에 대하여 <b>미도착건</b>을 다음 도착일(일/월/화/목)까지 팀끼리 <b>핸드오버</b> 하기 위함
       </div>
       <div class="muted" style="margin-top:6px;">
-        입력 방법 2가지: (1) 표에서 직접 입력/추가 (2) 이미지 업로드 → <b>아티클 번호만 OCR 추출</b> → 행 자동 추가
+        입력 방식 : <b>아티클번호 입력</b>, <b>프리노트 캡쳐 첨부</b> 중 택 1
       </div>
       
       <div class="connMini">
@@ -204,28 +204,22 @@ label.btn{ white-space: nowrap !important; }
   </div>
 </div>
 
-<div class="row controls style="justify-content:space-between; margin-top:10px;">
-        <div class="row">
-          <label class="toggle wide">
-            <input type="checkbox" id="onlyOpen" checked />
-            도착완료 숨김(미도착만)
-          </label>
-          <button class="btn secondary" id="addRow">단일 아티클 추가</button>
-          <button class="btn secondary" id="pasteRow">복수 아티클 추가</button>
-          <button class="btn danger" id="deleteSelected" disabled>선택 삭제</button>
-          <button class="btn danger" id="deleteAll">전체 삭제</button>
-          <span class="muted wide" id="selCount">선택 0</span>
-        </div>
-        <div class="kpi counts">
-          <span class="pill" id="openCount">미도착 0</span>
-          <span class="pill" id="doneCount">도착 0</span>
-        </div>
-      </div>
-
-      <div class="muted" style="margin-top:8px;">
-      </div>
-      <div class="muted" style="margin-top:6px;">
-      </div>
+<div class="row controls" style="justify-content:space-between; margin-top:10px;">
+  <div class="row controlsLeft">
+    <label class="toggle wide">
+      <input type="checkbox" id="onlyOpen" checked />
+      도착완료 숨김(미도착만)
+    </label>
+    <button class="btn danger" id="deleteSelected" disabled>선택 삭제</button>
+    <button class="btn danger" id="deleteAll">전체 삭제</button>
+    <button class="btn danger" id="clearArrivedTop">도착완료 일괄삭제</button>
+    <span class="muted wide" id="selCount">선택 0</span>
+  </div>
+  <div class="kpi counts">
+    <span class="pill" id="openCount">미도착 0</span>
+    <span class="pill" id="doneCount">도착 0</span>
+  </div>
+</div>
     </div>
 
     <div class="panel">
@@ -240,22 +234,13 @@ label.btn{ white-space: nowrap !important; }
     <th>제품명</th>
     <th class="qtyCell">수량</th>
     <th class="locCell">로케이션</th>
-    <th class="hideMobile">메모</th>
+    <th>메모</th>
     <th class="dateCell">입력날짜</th>
   </tr>
 </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <div class="bottomBar">
-    <div class="bottomInner">
-      <button class="btn" id="exportCsv">CSV</button>
-      <button class="btn" id="exportJson">JSON</button>
-      <span class="spacer"></span>
-      <button class="btn danger" id="clearArrived">도착완료 일괄삭제</button>
     </div>
   </div>
 
@@ -288,6 +273,7 @@ label.btn{ white-space: nowrap !important; }
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+
 
     const $ = (id) => document.getElementById(id);
 
@@ -897,68 +883,7 @@ function render() {
       if (!a) { alert("아티클 번호 형식이 아닙니다. (예: 000.000.00 / 8자리 숫자)"); return; }
       await addRowWithArticle(a);
     });
-// Paste modal
-    $("pasteRow").addEventListener("click", () => { $("modalBg").style.display = "flex"; $("pasteText").value = ""; $("pasteText").focus(); });
-    $("closeModal").addEventListener("click", () => { $("modalBg").style.display = "none"; });
-    $("modalBg").addEventListener("click", (e) => { if (e.target === $("modalBg")) $("modalBg").style.display = "none"; });
 
-    $("confirmPaste").addEventListener("click", async () => {
-      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const raw = norm($("pasteText").value);
-      const articles = extractAllArticles(raw);
-      if (!articles.length) {
-        alert("아티클 번호를 찾지 못했습니다.\n예: [20378671, 60378669, 00378672] 또는 20378671,60378669");
-        return;
-      }
-      for (const a of articles) {
-        await addRowWithArticle(a);
-      }
-      $("modalBg").style.display = "none";
-    });
-$("deleteSelected").addEventListener("click", async () => {
-      const n = state.selected.size;
-      if (!n) return;
-      if (!confirm(`선택한 ${n}개 항목을 삭제할까요?`)) return;
-      const ids = [...state.selected];
-      state.selected = new Set();
-      updateSelectionUI();
-      await deleteDocs(ids);
-    });
-
-    $("deleteAll").addEventListener("click", async () => {
-      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const n = state.items.length;
-      if (!n) return alert("삭제할 항목이 없습니다.");
-      if (!confirm(`현재 보드의 전체 ${n}개 항목을 삭제할까요?`)) return;
-      state.selected = new Set();
-      updateSelectionUI();
-      await deleteAllDocs();
-    });
-
-    $("clearArrived").addEventListener("click", async () => {
-      if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const arrived = state.items.filter(it => it.arrived).map(it => it.id);
-      if (!arrived.length) return alert("도착 완료 항목이 없습니다.");
-      if (!confirm(`도착 완료 ${arrived.length}개를 삭제할까요?`)) return;
-      await deleteDocs(arrived);
-    });
-
-    $("exportJson").addEventListener("click", () => {
-      const payload = { boardId: BOARD_ID, exportedAt: new Date().toISOString(), items: state.items };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      downloadBlob(blob, `prenote-check-${BOARD_ID}.json`);
-    });
-
-    $("exportCsv").addEventListener("click", () => {
-      const csv = toCsv(state.items);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      downloadBlob(blob, `prenote-check-${BOARD_ID}.csv`);
-    });
-
-    $("imgInput").addEventListener("change", async (e) => {
-      const files = [...(e.target.files || [])].filter(f => f.type.startsWith("image/"));
-      await handleFiles(files);
-    });
 
     // Start
     (function boot(){
@@ -966,6 +891,7 @@ $("deleteSelected").addEventListener("click", async () => {
       initFirebase();
     })();
   
+
 </script>
 </body>
 </html>
