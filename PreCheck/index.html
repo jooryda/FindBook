@@ -104,11 +104,24 @@
       .controls .row{ flex-wrap:wrap; gap:8px; }
       .controls .counts{ flex: 1 0 100%; justify-content:flex-end; }
     }
+  
+    .headerPanel{ position:relative; }
+    .connMini{
+      position:absolute; top:14px; right:14px;
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px; border:1px solid var(--border); border-radius:999px;
+      background:#fff;
+    }
+    .connLabel{ font-size:12px; color:var(--muted); }
+    @media (max-width: 720px){
+      .connLabel{ display:none; }
+      .connMini{ top:10px; right:10px; padding:6px 8px; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="panel">
+    <div class="panel headerPanel">
       <h1>[프리노트 체크]</h1>
       <div class="muted">
         목적: 익일 오더(배송) 확인 후 <b>미도착 물품을 팀이 공유</b>해서 중복 오더를 방지하고, 다음 도착(일/월/화/목 등)을 함께 추적합니다.
@@ -117,10 +130,10 @@
         입력 방법 2가지: (1) 표에서 직접 입력/추가 (2) 이미지 업로드 → <b>아티클 번호만 OCR 추출</b> → 행 자동 추가
       </div>
       
-      <div class="muted" style="margin-top:8px; display:flex; align-items:center; gap:10px;">
+      <div class="connMini">
         <span class="statusDot" id="statusDot" aria-label="연결 상태"></span>
-        <span class="muted" id="connText">연결 준비</span>
-        <span class="muted" id="dupeText" style="margin-left:auto;">중복 0</span>
+        <span class="connLabel" id="connText">연결 준비</span>
+        <span class="muted" id="dupeText">중복 0</span>
       </div>
     </div>
 
@@ -226,6 +239,7 @@
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+
     const $ = (id) => document.getElementById(id);
 
     // =======================
@@ -265,8 +279,22 @@
     let col = null;
 
     function setConn(text, kind="") {
-      $("conn").textContent = text;
-      $("conn").className = "pill" + (kind ? (" " + kind) : "");
+      const ct = document.getElementById("connText");
+      if (ct) ct.textContent = text;
+
+      const dot = document.getElementById("statusDot");
+      if (dot) {
+        dot.classList.remove("ok","bad");
+        if (kind === "ok") dot.classList.add("ok");
+        if (kind === "bad") dot.classList.add("bad");
+      }
+
+      // backward compatibility (older UI)
+      const legacy = document.getElementById("conn");
+      if (legacy) {
+        legacy.textContent = text;
+        legacy.className = "pill" + (kind ? (" " + kind) : "");
+      }
     }
 
     function hasConfig(cfg) {
@@ -295,8 +323,10 @@
         const items = [];
         snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
         state.items = items;
+        connected = true;
+        clearTimeout(connTimer);
         state.ready = true;
-        setConn("실시간 연결됨");
+        setConn("실시간 연결됨", "ok");
         render();
       }, (err) => {
         console.error(err);
@@ -855,6 +885,7 @@ $("deleteSelected").addEventListener("click", async () => {
       wireDrop();
       initFirebase();
     })();
-  </script>
+  
+</script>
 </body>
 </html>
