@@ -276,6 +276,7 @@ label.btn{ white-space: nowrap !important; }
 
 
 
+
     const $ = (id) => document.getElementById(id);
 
     // =======================
@@ -311,6 +312,7 @@ label.btn{ white-space: nowrap !important; }
     // Firebase init + realtime
     // =======================
     let db = null;
+let connTimer = null;
     let auth = null;
     let col = null;
 
@@ -348,6 +350,8 @@ label.btn{ white-space: nowrap !important; }
       db = firebase.firestore();
 
       setConn("연결 중…", "warn");
+      connTimer = setTimeout(() => { setConn("연결 실패", "bad"); }, 12000);
+
 
       // Anonymous auth
       const res = await auth.signInAnonymously();
@@ -360,7 +364,7 @@ label.btn{ white-space: nowrap !important; }
         snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
         state.items = items;
         connected = true;
-        clearTimeout(connTimer);
+        if (connTimer) { clearTimeout(connTimer); connTimer = null; }
         state.ready = true;
         setConn("실시간 연결됨", "ok");
         render();
@@ -913,6 +917,7 @@ function render() {
       initFirebase();
     })();
   
+
 
 
 </script>
