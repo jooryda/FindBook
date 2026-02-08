@@ -389,6 +389,8 @@ table td { font-size: 13px; }
 
 
 
+
+
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
 
   function safeClass(id, className){
@@ -509,7 +511,29 @@ let connTimer = null;
       const map = { "O":"0","D":"0","Q":"0","I":"1","L":"1","Z":"2","S":"5","B":"8","G":"6" };
       return (s || "").toUpperCase().split("").map(ch => map[ch] ?? ch).join("");
     }
-    function extractArticleStrong(text) {
+    
+  // Sorting: 1) ETA day (closest upcoming among 일/월/화/목; unset last) 2) article number
+  const KOR_DOW_TO_NUM = { "일": 0, "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6 };
+
+  function normArticleForSort(s){
+    return String(s || "").replace(/[^0-9]/g, "").padStart(12, "0");
+  }
+
+  function etaRank(etaDow){
+    const key = String(etaDow || "").trim();
+    if (!key || key === "-" || !(key in KOR_DOW_TO_NUM)) return Number.POSITIVE_INFINITY;
+
+    const today = new Date();
+    const t = today.getDay(); // 0=Sun
+    const target = KOR_DOW_TO_NUM[key];
+    let delta = (target - t + 7) % 7; // 0..6
+    // Only allow schedule days: 일/월/화/목
+    const schedule = new Set([0,1,2,4]);
+    if (!schedule.has(target)) return Number.POSITIVE_INFINITY;
+    return delta;
+  }
+
+function extractArticleStrong(text) {
       const t = norm(text);
       const m = t.match(ARTICLE_RE);
       if (m) return m[0];
@@ -824,18 +848,23 @@ function render() {
       const domOnlyOpen = $("onlyOpen") ? $("onlyOpen").checked : state.onlyOpen;
       state.onlyOpen = domOnlyOpen;
       const visible = domOnlyOpen ? state.items.filter(it => !it.arrived) : state.items;
-
-      // Sort: 미도착 우선, 그 다음 최신 업데이트
+      // Sort: 1) 도착예상요일(가까운 순, 미설정은 맨 뒤) 2) 아티클넘버
       visible.sort((a,b) => {
-        const aa = a.arrived ? 1 : 0;
-        const bb = b.arrived ? 1 : 0;
-        if (aa !== bb) return aa - bb;
+        const ra = etaRank(a.etaDow);
+        const rb = etaRank(b.etaDow);
+        if (ra !== rb) return ra - rb;
+
+        const aa = normArticleForSort(a.articleNumber);
+        const bb = normArticleForSort(b.articleNumber);
+        if (aa < bb) return -1;
+        if (aa > bb) return 1;
+
+        // tie-breaker: 최근 업데이트가 먼저
         const ta = a.updatedAt && a.updatedAt.toMillis ? a.updatedAt.toMillis() : 0;
         const tb = b.updatedAt && b.updatedAt.toMillis ? b.updatedAt.toMillis() : 0;
         return tb - ta;
       });
-
-      visible.forEach((it) => {
+visible.forEach((it) => {
         const tr = document.createElement("tr");
         const artNorm = extractArticleStrong(it.articleNumber || "");
         const isDupe = artNorm && state.dupes.has(artNorm);
@@ -1189,6 +1218,8 @@ $("doneCount")?.addEventListener("click", () => {
   cb.checked = !cb.checked;
   render();
 });
+
+
 
 
 
