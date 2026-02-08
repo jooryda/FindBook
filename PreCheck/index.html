@@ -12,9 +12,9 @@
       --radius: 14px;
     }
     body { margin:0; background:var(--bg); color:var(--ink); }
-    .wrap { max-width: 1320px; margin: 0 auto; padding: 12px; padding-bottom: 92px; }
-    .panel { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding: 12px; margin-bottom: 10px; }
-    h1 { margin:0 0 6px; font-size: 16px; }
+    .wrap { max-width: 1320px; margin: 0 auto; padding: 8px; padding-bottom: 92px; }
+    .panel { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding: 8px; margin-bottom: 6px; }
+    h1 { margin:0 0 6px; font-size: 15px; }
     .muted { color:var(--muted); font-size: 12px; line-height: 1.35; }
     .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .btn { border:1px solid #ddd; background:#fff; padding:9px 10px; border-radius: 12px; cursor:pointer; font-weight: 900; font-size: 13px; }
@@ -27,7 +27,7 @@
     .pill.bad{ border-color:#ffd1d1; background:#fff5f5; color:var(--danger); }
     .kpi{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
-    .tableWrap{ overflow:auto; border:1px solid var(--line); border-radius: 14px; margin-top: 10px; background:#fff; }
+    .tableWrap{ overflow:auto; border:1px solid var(--line); border-radius: 14px; margin-top: 6px; background:#fff; }
     table{ width:100%; border-collapse: collapse; min-width: 960px; }
     thead th{
       position: sticky; top: 0; z-index: 1;
@@ -76,12 +76,12 @@
     /* Paste modal */
     .modalBackdrop{ position: fixed; inset: 0; background: rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
     .modal{ width: min(860px, 100%); background:#fff; border-radius: 14px; box-shadow: 0 18px 60px rgba(0,0,0,.25); padding: 14px; }
-    .modal h2{ margin:0 0 8px; font-size: 16px; }
+    .modal h2{ margin:0 0 8px; font-size: 15px; }
     .modal textarea{ width:100%; min-height: 120px; border-radius: 12px; border:1px solid #ddd; padding: 10px; }
     .tiny{ font-size: 11px; color: var(--muted); }
 
     .drop{
-      border: 2px dashed #cdd6e4; border-radius: 14px; padding: 12px; background:#fbfcff;
+      border: 2px dashed #cdd6e4; border-radius: 14px; padding: 8px; background:#fbfcff;
     }
     .drop strong{ font-size: 13px; }
     .drop .hint{ font-size: 12px; color: var(--muted); margin-top: 4px; }
@@ -119,7 +119,7 @@
     }
   
 /* === UI tweaks (focus list & compact controls) === */
-.uploaderDetails{ width:100%; margin-bottom: 10px; }
+.uploaderDetails{ width:100%; margin-bottom: 6px; }
 .detailsSummary{
   cursor:pointer;
   user-select:none;
@@ -134,11 +134,11 @@
 }
 .detailsSummary::before{ content:"▸"; color:#374151; }
 .uploaderDetails[open] .detailsSummary::before{ content:"▾"; }
-#dropZone{ margin-top:10px; }
+#dropZone{ margin-top: 6px; }
 
 .quickAdd{ width:100%; padding: 6px 0 10px; }
 .quickAddLabel{ font-weight:900; }
-.quickAddForm{ display:flex; gap:10px; align-items:center; }
+.quickAddForm{ display:flex; gap: 6px; align-items:center; }
 .quickAddForm input{ flex:1; min-width: 180px; }
 .quickAddHint{ color: rgba(0,0,0,.55); font-size:12px; }
 
@@ -152,6 +152,115 @@
   text-align:center;
 }
 label.btn{ white-space: nowrap !important; }
+
+/* tighter table spacing */
+table th, table td { padding: 8px 6px; }
+table th { font-size: 12px; }
+table td { font-size: 13px; }
+.tableWrap { overflow-x:auto; }
+
+/* card list (mobile-first) */
+.cards { display:none; }
+.card {
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 14px;
+  padding: 8px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  margin-bottom: 6px;
+}
+.card.dupe { border-color: rgba(220,38,38,.45); background: rgba(220,38,38,.03); }
+.cardTop {
+  display:flex; align-items:center; justify-content:space-between; gap: 6px;
+}
+.cardArt { font-weight: 900; font-size: 15px; }
+.cardMeta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top: 6px; }
+.chip { border:1px solid rgba(0,0,0,.12); border-radius:999px; padding:3px 6px; font-size:12px; background: rgba(0,0,0,.02); }
+.cardGrid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+.cardGrid .full { grid-column: 1 / -1; }
+.cardLabel { font-size: 11px; color: rgba(0,0,0,.55); margin-bottom: 2px; }
+.cardField select, .cardField input, .cardField .cell {
+  width:100%;
+}
+.cardFooter { margin-top: 6px; font-size:12px; color: rgba(0,0,0,.55); display:flex; justify-content:space-between; }
+
+@media (max-width: 860px){
+  .tableWrap { display:none; }
+  .cards { display:block; }
+}
+
+/* denser mobile cards */
+.cardTop { gap: 8px; }
+.cardMeta { gap: 6px; }
+.cardFooter { margin-top: 6px; }
+.cardField select, .cardField input, .cardField .cell { padding: 6px 8px; }
+@media (max-width: 860px){
+  .card { padding: 8px; }
+}
+
+/* ultra-dense mobile cards */
+@media (max-width: 860px){
+  .card{ padding:6px; margin-bottom:4px; border-radius:12px; }
+  .cardArt{ font-size:14px; }
+  .chip{ padding:2px 6px; font-size:11px; }
+  .cardMeta{ margin-top:4px; gap:4px; }
+  .cardGrid{ margin-top:4px; gap:6px 6px; }
+  .cardLabel{ font-size:10.5px; margin-bottom:1px; }
+  .cardField select, .cardField input, .cardField .cell{ padding:5px 6px; font-size:12px; }
+  .cardFooter{ margin-top:4px; font-size:11px; }
+  .miniSelect{ padding:4px 6px !important; }
+}
+
+/* card footer row */
+.cardFootRow{ display:flex; gap:8px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; margin-top:4px; }
+.cardFootItem{ display:flex; flex-direction:column; gap:2px; min-width: 110px; }
+.cardFootItem.small{ min-width: 86px; }
+.miniLabel{ font-size:10.5px; color: rgba(0,0,0,.60); line-height:1; }
+.inlineMeta{ font-size:11px; color: rgba(0,0,0,.60); }
+.arrivedWrap{ display:flex; align-items:center; gap:6px; }
+.arrivedWrap .miniLabel{ margin:0; }
+@media (max-width: 860px){
+  .cardGrid{ grid-template-columns: 1fr; } /* stack to avoid truncation */
+  .cardField.full{ grid-column:auto; }
+  .cardFootItem{ min-width: 100px; }
+  .cardFootItem.small{ min-width: 90px; }
+}
+
+/* subtle dividers inside cards */
+.cardTop{ padding-bottom:6px; border-bottom:1px solid rgba(0,0,0,.06); }
+.cardGrid{ padding-top:6px; padding-bottom:6px; border-bottom:1px solid rgba(0,0,0,.06); }
+.cardFootRow{ padding-top:6px; }
+
+@media (max-width: 860px){
+  /* make editable cell look like underlined field (very light) */
+  .card .cell{
+    border:0 !important;
+    border-bottom:1px solid rgba(0,0,0,.10) !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    padding:6px 0 !important;
+  }
+  .card .cell:focus{
+    outline:none !important;
+    border-bottom-color: rgba(0,0,0,.22) !important;
+    background: transparent !important;
+  }
+  .card .miniSelect{
+    border:0 !important;
+    border-bottom:1px solid rgba(0,0,0,.12) !important;
+    border-radius:0 !important;
+    background: transparent !important;
+    padding:6px 0 !important;
+  }
+}
+
+/* clickable counts */
+.kpi .pill { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -187,7 +296,7 @@ label.btn{ white-space: nowrap !important; }
             <input id="imgInput" type="file" accept="image/*" multiple />
           </div>
         </div>
-        <div class="row" style="margin-top:8px;">
+        <div class="row" style="margin-top: 6px;">
           <span class="progress" id="ocrProg"></span>
         </div>
         </div>
@@ -204,11 +313,11 @@ label.btn{ white-space: nowrap !important; }
   </div>
 </div>
 
-<div class="row controls" style="justify-content:space-between; margin-top:10px;">
+<div class="row controls" style="justify-content:space-between; margin-top: 6px;">
   <div class="row controlsLeft">
     <label class="toggle wide">
       <input type="checkbox" id="onlyOpen" checked />
-      도착완료 숨김(미도착만)
+      미도착만 보기
     </label>
     <button class="btn danger" id="deleteSelected" disabled>선택 삭제</button>
     <button class="btn danger" id="deleteAll">전체 삭제</button>
@@ -217,7 +326,7 @@ label.btn{ white-space: nowrap !important; }
   </div>
   <div class="kpi counts">
     <span class="pill" id="openCount">미도착 0</span>
-    <span class="pill" id="doneCount">도착 0</span>
+    <span class="pill" id="doneCount" title="도착 항목 보기/숨기기 (클릭)">도착 0</span>
   </div>
 </div>
     </div>
@@ -241,6 +350,7 @@ label.btn{ white-space: nowrap !important; }
           <tbody id="tbody"></tbody>
         </table>
       </div>
+      <div id="cards" class="cards"></div>
     </div>
   </div>
 
@@ -255,7 +365,7 @@ label.btn{ white-space: nowrap !important; }
         아래에 <span class="mono">[20378671, 60378669, 00378672]</span> 처럼 아티클 번호만 붙여넣으면, 해당 개수만큼 행이 생성됩니다. (제품명/수량/로케이션 등은 표에서 직접 입력)
       </div>
       <textarea id="pasteText" placeholder="[20378671, 60378669, 00378672]  또는  20378671,60378669,00378672  또는 줄바꿈으로 여러 개"></textarea>
-      <div class="row" style="margin-top:10px; justify-content:space-between;">
+      <div class="row" style="margin-top: 6px; justify-content:space-between;">
         <div class="tiny">추가 후에도 팀원에게 실시간 반영됩니다.</div>
         <div class="row">
           <button class="btn primary" id="confirmPaste">추가</button>
@@ -273,6 +383,11 @@ label.btn{ white-space: nowrap !important; }
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+
+
+
+
+
 
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
 
@@ -645,6 +760,22 @@ let connTimer = null;
       }
     });
 
+    // 미도착만 보기 토글
+    $("onlyOpen")?.addEventListener("change", () => {
+      state.onlyOpen = $("onlyOpen").checked;
+      render();
+    });
+
+    // '도착 n' 배지 클릭 시 토글
+    $("doneCount")?.addEventListener("click", () => {
+      const cb = $("onlyOpen");
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      state.onlyOpen = cb.checked;
+      render();
+    });
+
+
     $("deleteSelected")?.addEventListener("click", async () => {
       if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
       const ids = Array.from(selected);
@@ -686,9 +817,13 @@ function render() {
       computeDupes(state.items);
 
       const tbody = $("tbody");
-      tbody.innerHTML = "";
+      if (tbody) tbody.innerHTML = "";
+      const cards = $("cards");
+      if (cards) cards.innerHTML = "";
 
-      const visible = state.onlyOpen ? state.items.filter(it => !it.arrived) : state.items;
+      const domOnlyOpen = $("onlyOpen") ? $("onlyOpen").checked : state.onlyOpen;
+      state.onlyOpen = domOnlyOpen;
+      const visible = domOnlyOpen ? state.items.filter(it => !it.arrived) : state.items;
 
       // Sort: 미도착 우선, 그 다음 최신 업데이트
       visible.sort((a,b) => {
@@ -801,7 +936,122 @@ function render() {
         tr.appendChild(tdMemo);
         tr.appendChild(tdCreated);
 
-        tbody.appendChild(tr);
+        tbody && tbody.appendChild(tr);
+
+                if (cards) {
+          const card = document.createElement("div");
+          card.className = "card" + (isDupe ? " dupe" : "");
+
+          // header: [select] article | qty/location
+          const top = document.createElement("div");
+          top.className = "cardTop";
+
+          const left = document.createElement("div");
+          left.style.display = "flex";
+          left.style.alignItems = "center";
+          left.style.gap = "10px";
+
+          const sel2 = document.createElement("input");
+          sel2.type = "checkbox";
+          sel2.checked = state.selected.has(it.id);
+          sel2.addEventListener("change", () => {
+            if (sel2.checked) state.selected.add(it.id);
+            else state.selected.delete(it.id);
+            updateSelectionUI();
+            sel.checked = sel2.checked;
+          });
+
+          const artTitle = document.createElement("div");
+          artTitle.className = "cardArt mono";
+          artTitle.textContent = extractArticleStrong(it.articleNumber || "") || (it.articleNumber || "");
+
+          left.appendChild(sel2);
+          left.appendChild(artTitle);
+
+          const right = document.createElement("div");
+          right.className = "inlineMeta mono";
+          const loc = (it.location || "-");
+          const qty = (Number.isFinite(it.qty) ? it.qty : "-");
+          right.textContent = `수량 ${qty} · 로케이션 ${loc}`;
+
+          top.appendChild(left);
+          top.appendChild(right);
+
+          // fields: 제품명 / 메모 (stacked on mobile)
+          const grid = document.createElement("div");
+          grid.className = "cardGrid";
+
+          const fName = document.createElement("div");
+          fName.className = "cardField full";
+          fName.innerHTML = '<div class="miniLabel">제품명</div>';
+          fName.appendChild(editableCell(it.productName || "", async (v)=>patchDoc(it.id,{productName:v})));
+          grid.appendChild(fName);
+
+          const fMemo = document.createElement("div");
+          fMemo.className = "cardField full";
+          fMemo.innerHTML = '<div class="miniLabel">메모</div>';
+          fMemo.appendChild(editableCell(it.memo || "", async (v)=>patchDoc(it.id,{memo:v}), "cell-muted"));
+          grid.appendChild(fMemo);
+
+          // footer: 입력날짜 | 도착예상요일 | 도착
+          const foot = document.createElement("div");
+          foot.className = "cardFootRow";
+
+          const d1 = document.createElement("div");
+          d1.className = "cardFootItem";
+          d1.innerHTML = '<div class="miniLabel">입력날짜</div>';
+          const dateTxt = document.createElement("div");
+          dateTxt.className = "mono";
+          dateTxt.style.fontSize = "12px";
+          dateTxt.textContent = (it.createdAt ? fmtTime(it.createdAt).slice(0,10) : "");
+          d1.appendChild(dateTxt);
+
+          const d2 = document.createElement("div");
+          d2.className = "cardFootItem small";
+          d2.innerHTML = '<div class="miniLabel">도착예상요일</div>';
+          const selEta2 = document.createElement("select");
+          selEta2.className = "miniSelect";
+          ETA_OPTIONS.forEach(opt => {
+            const o = document.createElement("option");
+            o.value = opt; o.textContent = opt;
+            selEta2.appendChild(o);
+          });
+          selEta2.value = it.etaDow || "-";
+          selEta2.addEventListener("change", async ()=>patchDoc(it.id,{etaDow:selEta2.value}));
+          d2.appendChild(selEta2);
+
+          const d3 = document.createElement("div");
+          d3.className = "cardFootItem small";
+          d3.innerHTML = '<div class="miniLabel">도착</div>';
+          const aw = document.createElement("div");
+          aw.className = "arrivedWrap";
+          const arrived2 = document.createElement("input");
+          arrived2.type = "checkbox";
+          arrived2.checked = !!it.arrived;
+          arrived2.addEventListener("change", async () => {
+            await patchDoc(it.id, { arrived: arrived2.checked });
+          });
+          const atxt = document.createElement("span");
+          atxt.className = "mono";
+          atxt.style.fontSize = "12px";
+          atxt.textContent = arrived2.checked ? "완료" : "미완료";
+          arrived2.addEventListener("change", () => {
+            atxt.textContent = arrived2.checked ? "완료" : "미완료";
+          });
+          aw.appendChild(arrived2);
+          aw.appendChild(atxt);
+          d3.appendChild(aw);
+
+          foot.appendChild(d1);
+          foot.appendChild(d2);
+          foot.appendChild(d3);
+
+          card.appendChild(top);
+          card.appendChild(grid);
+          card.appendChild(foot);
+
+          cards.appendChild(card);
+        }
 });
 
       // 선택 상태 정리
@@ -927,6 +1177,18 @@ function render() {
   
 
 
+
+
+
+
+
+
+$("doneCount")?.addEventListener("click", () => {
+  const cb = $("onlyOpen");
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  render();
+});
 
 
 
