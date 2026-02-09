@@ -406,6 +406,7 @@ textarea.editInput{ resize:none; overflow:hidden; }
 
 
 
+
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
 
   function safeClass(id, className){
@@ -801,8 +802,8 @@ function extractArticleStrong(text) {
       });
       const dupes = new Set([...map.entries()].filter(([_,c]) => c >= 2).map(([a]) => a));
       state.dupes = dupes;
-      safeText("dupeTag", `중복 ${dupes.size}`);
-      safeClass("dupeTag", "pill" + (dupes.size ? " bad" : ""));
+      safeText("dupeText", `중복 ${dupes.size}`);
+      safeClass("dupeText", "pill" + (dupes.size ? " bad" : ""));
     }
 
     // Quick add: 입력한 아티클 번호(복수)를 파싱해서 행 추가
@@ -855,12 +856,12 @@ function extractArticleStrong(text) {
 
     $("deleteSelected")?.addEventListener("click", async () => {
       if (!col) return alert("Firebase 설정을 먼저 완료하세요.");
-      const ids = Array.from(selected);
+      const ids = Array.from(state.selected);
       if (!ids.length) return;
       if (!confirm(`선택 ${ids.length}개를 삭제할까요?`)) return;
       await deleteDocs(ids);
-      selected.clear();
-      updateSelectedUi();
+      state.selected.clear();
+      updateSelectionUI();
     });
 
     $("deleteAll")?.addEventListener("click", async () => {
@@ -1271,6 +1272,7 @@ $("doneCount")?.addEventListener("click", () => {
   cb.checked = !cb.checked;
   render();
 });
+
 
 
 
