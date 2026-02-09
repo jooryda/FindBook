@@ -405,6 +405,7 @@ textarea.editInput{ resize:none; overflow:hidden; }
 
 
 
+
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
 
   function safeClass(id, className){
@@ -722,7 +723,7 @@ function extractArticleStrong(text) {
     function updateSelectionUI() {
       const n = state.selected.size;
       safeText("selCount", `선택 ${n}`);
-      const btn = $("btnDeleteSelected");
+      const btn = $("deleteSelected");
       if (btn) btn.disabled = (n === 0);
     }
 
@@ -1270,6 +1271,7 @@ $("doneCount")?.addEventListener("click", () => {
   cb.checked = !cb.checked;
   render();
 });
+
 
 
 
