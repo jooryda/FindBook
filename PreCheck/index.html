@@ -273,6 +273,16 @@ table td { font-size: 13px; }
   padding: 0;
 }
 textarea.editInput{ resize:none; overflow:hidden; }
+
+/* editable meta in card header (qty/location) */
+.inlineMeta{ display:flex; gap:10px; justify-content:flex-end; align-items:flex-start; flex-wrap:wrap; }
+.metaEdit{ display:flex; gap:6px; align-items:center; }
+.metaLabel{ font-size:11px; color:#777; }
+.inlineMeta input.editInput{ width:64px; text-align:left; padding:0; }
+@media (max-width: 860px){
+  .inlineMeta{ gap:8px; }
+  .inlineMeta input.editInput{ width:56px; }
+}
 </style>
 </head>
 <body>
@@ -395,6 +405,7 @@ textarea.editInput{ resize:none; overflow:hidden; }
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+
 
 
 
@@ -1053,9 +1064,35 @@ visible.forEach((it) => {
 
           const right = document.createElement("div");
           right.className = "inlineMeta mono";
-          const loc = (it.location || "-");
-          const qty = (Number.isFinite(it.qty) ? it.qty : "-");
-          right.textContent = `수량 ${qty} · 로케이션 ${loc}`;
+
+          // qty editable
+          const qtyWrap = document.createElement("div");
+          qtyWrap.className = "metaEdit";
+          const qtyLab = document.createElement("span");
+          qtyLab.className = "metaLabel";
+          qtyLab.textContent = "수량";
+          const qtyVal = editableCell((Number.isFinite(it.qty) ? String(it.qty) : ""), async (v) => {
+            const n = parseInt(String(v || "").replace(/[^0-9]/g, ""), 10);
+            await patchDoc(it.id, { qty: Number.isFinite(n) ? n : null });
+          }, "mono");
+          if (qtyVal && qtyVal.tagName === "INPUT") qtyVal.inputMode = "numeric";
+          qtyWrap.appendChild(qtyLab);
+          qtyWrap.appendChild(qtyVal);
+
+          // location editable
+          const locWrap = document.createElement("div");
+          locWrap.className = "metaEdit";
+          const locLab = document.createElement("span");
+          locLab.className = "metaLabel";
+          locLab.textContent = "로케이션";
+          const locVal = editableCell((it.location || ""), async (v) => {
+            await patchDoc(it.id, { location: String(v || "").trim() });
+          }, "mono");
+          locWrap.appendChild(locLab);
+          locWrap.appendChild(locVal);
+
+          right.appendChild(qtyWrap);
+          right.appendChild(locWrap);
 
           top.appendChild(left);
           top.appendChild(right);
@@ -1272,6 +1309,7 @@ $("doneCount")?.addEventListener("click", () => {
   cb.checked = !cb.checked;
   render();
 });
+
 
 
 
