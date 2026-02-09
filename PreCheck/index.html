@@ -261,6 +261,18 @@ table td { font-size: 13px; }
 
 /* clickable counts */
 .kpi .pill { cursor: pointer; }
+
+/* mobile-friendly inputs for cards */
+.editInput{
+  width:100%;
+  box-sizing:border-box;
+  border:0;
+  outline:none;
+  background:transparent;
+  font: inherit;
+  padding: 0;
+}
+textarea.editInput{ resize:none; overflow:hidden; }
 </style>
 </head>
 <body>
@@ -383,6 +395,8 @@ table td { font-size: 13px; }
   <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <script>
+
+
 
 
 
@@ -708,7 +722,8 @@ function extractArticleStrong(text) {
     function updateSelectionUI() {
       const n = state.selected.size;
       safeText("selCount", `선택 ${n}`);
-      if ($("\1")) $("\1").disabled = (n === 0);
+      const btn = $("btnDeleteSelected");
+      if (btn) btn.disabled = (n === 0);
     }
 
     function fmtTime(ts) {
@@ -727,6 +742,43 @@ function extractArticleStrong(text) {
     }
 
     function editableCell(value, onCommit, extraClass="") {
+      const isMobile = window.matchMedia && window.matchMedia("(max-width: 860px)").matches;
+
+      // On some mobile browsers (notably iOS Safari), contentEditable can be flaky.
+      // Use input/textarea on mobile for reliable editing.
+      const isMemo = String(extraClass || "").includes("cell-muted");
+
+      if (isMobile) {
+        if (isMemo) {
+          const ta = document.createElement("textarea");
+          ta.className = `editInput ${extraClass}`.trim();
+          ta.rows = 1;
+          ta.value = value || "";
+          ta.addEventListener("input", () => {
+            ta.style.height = "auto";
+            ta.style.height = (ta.scrollHeight) + "px";
+          });
+          ta.addEventListener("blur", () => onCommit(ta.value.trim()));
+          // initial auto height
+          setTimeout(() => {
+            ta.style.height = "auto";
+            ta.style.height = (ta.scrollHeight) + "px";
+          }, 0);
+          return ta;
+        } else {
+          const inp = document.createElement("input");
+          inp.type = "text";
+          inp.className = `editInput ${extraClass}`.trim();
+          inp.value = value || "";
+          inp.addEventListener("blur", () => onCommit(inp.value.trim()));
+          inp.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
+          });
+          return inp;
+        }
+      }
+
+      // Desktop: keep contentEditable
       const div = document.createElement("div");
       div.className = `edit ${extraClass}`.trim();
       div.contentEditable = "true";
@@ -1218,6 +1270,8 @@ $("doneCount")?.addEventListener("click", () => {
   cb.checked = !cb.checked;
   render();
 });
+
+
 
 
 
