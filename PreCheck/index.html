@@ -418,6 +418,7 @@ textarea.editInput{ resize:none; overflow:hidden; }
 
 
 
+
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
 
   function safeClass(id, className){
@@ -1284,12 +1285,29 @@ visible.forEach((it) => {
     // =======================
     // Events
     // =======================
-    $("\1")?.addEventListener("change", (e) => {
+
+    // 미도착만 보기 토글
+    $("onlyOpen")?.addEventListener("change", (e) => {
       state.onlyOpen = !!e.target.checked;
       render();
     });
 
-        // Start
+    // 이미지 선택(여러개) → OCR 처리
+    $("imgInput")?.addEventListener("change", async (e) => {
+      const files = [...(e.target.files || [])].filter(f => (f.type || "").startsWith("image/"));
+      await handleFiles(files);
+    });
+
+    // '도착 n' 배지 클릭 시 토글
+    $("doneCount")?.addEventListener("click", () => {
+      const cb = $("onlyOpen");
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      state.onlyOpen = cb.checked;
+      render();
+    });
+
+    // Start
     (function boot(){
       wireDrop();
       initFirebase();
@@ -1303,12 +1321,7 @@ visible.forEach((it) => {
 
 
 
-$("doneCount")?.addEventListener("click", () => {
-  const cb = $("onlyOpen");
-  if (!cb) return;
-  cb.checked = !cb.checked;
-  render();
-});
+
 
 
 
