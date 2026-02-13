@@ -419,6 +419,7 @@ textarea.editInput{ resize:none; overflow:hidden; }
 
 
 
+
 function safeText(id,value){const el=document.getElementById(id); if(el) el.textContent=value;}
 
   function safeClass(id, className){
@@ -459,7 +460,7 @@ function safeText(id,value){const el=document.getElementById(id); if(el) el.text
       ocrBusy: false,
       dupes: new Set(),
     };
-    const ETA_OPTIONS = ["-", "일", "월", "화", "목"];
+    const ETA_OPTIONS = ["-", "일", "월", "수", "금"];
 
     // =======================
     // Firebase init + realtime
@@ -540,7 +541,7 @@ let connTimer = null;
       return (s || "").toUpperCase().split("").map(ch => map[ch] ?? ch).join("");
     }
     
-  // Sorting: 1) ETA day (closest upcoming among 일/월/화/목; unset last) 2) article number
+  // Sorting: 1) ETA day (closest upcoming among 일/월/수/금; unset last) 2) article number
   const KOR_DOW_TO_NUM = { "일": 0, "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6 };
 
   function normArticleForSort(s){
@@ -1313,6 +1314,7 @@ visible.forEach((it) => {
       initFirebase();
     })();
   
+
 
 
 
