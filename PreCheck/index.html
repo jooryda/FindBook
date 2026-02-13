@@ -555,8 +555,8 @@ let connTimer = null;
     const t = today.getDay(); // 0=Sun
     const target = KOR_DOW_TO_NUM[key];
     let delta = (target - t + 7) % 7; // 0..6
-    // Only allow schedule days: 일/월/화/목
-    const schedule = new Set([0,1,2,4]);
+    // Only allow schedule days: 일/월/화/금
+    const schedule = new Set([0,1,2,5]);
     if (!schedule.has(target)) return Number.POSITIVE_INFINITY;
     return delta;
   }
