@@ -290,7 +290,7 @@ textarea.editInput{ resize:none; overflow:hidden; }
     <div class="panel headerPanel">
       <h1>[프리노트 체크]</h1>
       <div class="muted">
-        프리 혹은 오더 건에 대하여 <b>미도착건</b>을 다음 도착일(일/월/화/목)까지 팀끼리 <b>핸드오버</b> 하기 위함
+        프리 혹은 오더 건에 대하여 <b>미도착건</b>을 다음 도착일(일/월/수/금)까지 팀끼리 <b>핸드오버</b> 하기 위함
       </div>
       <div class="muted" style="margin-top:6px;">
         입력 방식 : <b>아티클번호 입력</b>, <b>프리노트 캡쳐 첨부</b> 중 택 1
@@ -555,8 +555,8 @@ let connTimer = null;
     const t = today.getDay(); // 0=Sun
     const target = KOR_DOW_TO_NUM[key];
     let delta = (target - t + 7) % 7; // 0..6
-    // Only allow schedule days: 일/월/화/금
-    const schedule = new Set([0,1,2,5]);
+    // Only allow schedule days: 일/월/수/금
+    const schedule = new Set([0,1,3,5]);
     if (!schedule.has(target)) return Number.POSITIVE_INFINITY;
     return delta;
   }
